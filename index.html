@@ -41,6 +41,13 @@
         .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
         .controls label { font-size: 11px; color: #aaa; text-transform: uppercase; }
 
+        /* Banner Avviso Data Passata */
+        .past-banner {
+            background: #3a2e12; border: 1px solid #e5a93b; color: #e5a93b;
+            padding: 8px 12px; border-radius: 8px; font-size: 12px; text-align: center;
+            margin-bottom: 12px; font-weight: bold; display: none;
+        }
+
         /* Tabs Sale */
         .tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 15px; }
         .tab-btn {
@@ -64,6 +71,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
         }
         .table-card.free { background: #1b3e20; border: 1px solid #2e7d32; color: #81c784; }
+        .table-card.free.disabled { background: #222; border-color: #444; color: #666; cursor: not-allowed; opacity: 0.6; }
         .table-card.occupied { background: #4a1919; border: 1px solid #c62828; color: #ef9a9a; }
         .table-number { font-size: 20px; font-weight: bold; }
         .table-status { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
@@ -123,6 +131,11 @@
                     <option value="Pranzo">Pranzo</option>
                 </select>
             </div>
+        </div>
+
+        <!-- BANNER PER DATE PASSATE -->
+        <div class="past-banner" id="past-banner">
+            ⚠️ Data antecedente ad oggi: consultazione storico (Prenotazioni disabilitate)
         </div>
 
         <!-- TABS SALE -->
@@ -246,8 +259,20 @@
         let selectedTableId = null;
         let selectedBookingId = null;
 
-        // Inizializzazione Data odierna
-        document.getElementById('filter-date').valueAsDate = new Date();
+        // Calcola data odierna in formato YYYY-MM-DD locale
+        function getTodayString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Imposta la data odierna ed il blocco 'min' sul selettore data
+        const todayStr = getTodayString();
+        const datePicker = document.getElementById('filter-date');
+        datePicker.value = todayStr;
+        datePicker.min = todayStr;
 
         // Caricamento prenotazioni da LocalStorage
         function getBookings() {
@@ -293,9 +318,16 @@
             const room = ROOMS[currentRoomIndex];
             document.getElementById('current-room-name').innerText = room.name;
 
-            const date = document.getElementById('filter-date').value;
+            const selectedDate = document.getElementById('filter-date').value;
             const service = document.getElementById('filter-service').value;
-            
+            const today = getTodayString();
+
+            // Verifica se la data selezionata è nel passato
+            const isPast = selectedDate < today;
+
+            // Mostra/Nascondi banner avviso data passata
+            document.getElementById('past-banner').style.display = isPast ? 'block' : 'none';
+
             const bookings = getBookings();
             const grid = document.getElementById('tables-grid');
             grid.innerHTML = '';
@@ -304,19 +336,18 @@
             let occCount = 0;
 
             for (let i = 1; i <= room.tables; i++) {
-                // Cerca prenotazione corrispondente a stanza, tavolo, data e servizio
                 const booking = bookings.find(b => 
                     b.room === room.name && 
                     b.table === i && 
-                    b.date === date && 
+                    b.date === selectedDate && 
                     b.service === service
                 );
 
                 const card = document.createElement('div');
-                card.className = `table-card ${booking ? 'occupied' : 'free'}`;
                 
                 if (booking) {
                     occCount++;
+                    card.className = 'table-card occupied';
                     card.innerHTML = `
                         <div class="table-number">${i}</div>
                         <div class="table-status">OCCUPATO</div>
@@ -325,12 +356,23 @@
                     card.onclick = () => openDetailModal(booking);
                 } else {
                     freeCount++;
-                    card.innerHTML = `
-                        <div class="table-number">${i}</div>
-                        <div class="table-status">LIBERO</div>
-                        <div></div>
-                    `;
-                    card.onclick = () => openBookModal(i);
+                    if (isPast) {
+                        card.className = 'table-card free disabled';
+                        card.innerHTML = `
+                            <div class="table-number">${i}</div>
+                            <div class="table-status">NON PRENOTABILE</div>
+                            <div></div>
+                        `;
+                        card.onclick = () => alert('Non è possibile inserire prenotazioni per giorni passati.');
+                    } else {
+                        card.className = 'table-card free';
+                        card.innerHTML = `
+                            <div class="table-number">${i}</div>
+                            <div class="table-status">LIBERO</div>
+                            <div></div>
+                        `;
+                        card.onclick = () => openBookModal(i);
+                    }
                 }
                 grid.appendChild(card);
             }
@@ -341,6 +383,14 @@
 
         // MODAL PRENOTAZIONE
         function openBookModal(tableNum) {
+            const selectedDate = document.getElementById('filter-date').value;
+            const today = getTodayString();
+
+            if (selectedDate < today) {
+                alert('Non è possibile prenotare per date passate!');
+                return;
+            }
+
             selectedTableId = tableNum;
             const roomName = ROOMS[currentRoomIndex].name;
             document.getElementById('book-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${roomName}`;
@@ -352,6 +402,14 @@
         }
 
         function saveBooking() {
+            const selectedDate = document.getElementById('filter-date').value;
+            const today = getTodayString();
+
+            if (selectedDate < today) {
+                alert('Errore: Impossibile registrare una prenotazione in una data passata.');
+                return;
+            }
+
             const name = document.getElementById('book-name').value.trim();
             if (!name) { alert('Inserisci il nome del cliente!'); return; }
 
@@ -359,7 +417,7 @@
                 id: Date.now(),
                 room: ROOMS[currentRoomIndex].name,
                 table: selectedTableId,
-                date: document.getElementById('filter-date').value,
+                date: selectedDate,
                 time: document.getElementById('filter-time').value,
                 service: document.getElementById('filter-service').value,
                 name: name,
