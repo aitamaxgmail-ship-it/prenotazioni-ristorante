@@ -9,7 +9,7 @@
         body { background-color: #121315; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
         
         /* Modalità Schermata */
-        .screen { display: none; padding: 15px; width: 100%; max-width: 700px; margin: 0 auto; flex: 1; }
+        .screen { display: none; padding: 10px; width: 100%; max-width: 700px; margin: 0 auto; flex: 1; }
         .screen.active { display: flex; flex-direction: column; }
 
         /* Login Box */
@@ -34,52 +34,52 @@
         .btn-event { background: #8e24aa; color: #fff; }
 
         /* Header App */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2b30; gap: 8px; flex-wrap: wrap; }
-        .header-title { font-size: 16px; font-weight: bold; color: #e5a93b; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2b30; gap: 8px; flex-wrap: wrap; }
+        .header-title { font-size: 15px; font-weight: bold; color: #e5a93b; }
         .header-btns { display: flex; gap: 6px; }
-        .btn-sm { width: auto; padding: 6px 10px; font-size: 12px; background: #2a2b30; color: #e5a93b; border: 1px solid #e5a93b; border-radius: 6px; cursor: pointer; }
+        .btn-sm { width: auto; padding: 6px 10px; font-size: 11px; background: #2a2b30; color: #e5a93b; border: 1px solid #e5a93b; border-radius: 6px; cursor: pointer; }
 
         /* Controls / Filtri */
-        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
-        .controls label { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 10px 0; }
+        .controls label { font-size: 10px; color: #aaa; text-transform: uppercase; }
 
         /* Banner Avviso Data Passata */
         .past-banner {
             background: #3a2e12; border: 1px solid #e5a93b; color: #e5a93b;
-            padding: 8px 12px; border-radius: 8px; font-size: 12px; text-align: center;
-            margin-bottom: 12px; font-weight: bold; display: none;
+            padding: 6px 10px; border-radius: 6px; font-size: 11px; text-align: center;
+            margin-bottom: 10px; font-weight: bold; display: none;
         }
 
         /* Tabs Sale ed Eventi */
-        .tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 15px; }
+        .tabs { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; margin-bottom: 10px; }
         .tab-btn {
-            padding: 8px 14px; background: #2a2b30; border: 1px solid #444; border-radius: 20px;
-            color: #ccc; font-size: 13px; white-space: nowrap; cursor: pointer;
+            padding: 6px 12px; background: #2a2b30; border: 1px solid #444; border-radius: 16px;
+            color: #ccc; font-size: 12px; white-space: nowrap; cursor: pointer;
         }
         .tab-btn.active { background: #e5a93b; color: #121315; font-weight: bold; border-color: #e5a93b; }
         .tab-btn.event-tab { border-color: #ab47bc; color: #ce93d8; }
         .tab-btn.event-tab.active { background: #ab47bc; color: #fff; border-color: #ab47bc; }
 
         /* Room Title & Counter */
-        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .room-name { font-size: 18px; font-weight: bold; }
-        .counters { font-size: 12px; font-weight: bold; }
-        .badge-free { color: #4caf50; margin-right: 10px; }
+        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .room-name { font-size: 16px; font-weight: bold; }
+        .counters { font-size: 11px; font-weight: bold; }
+        .badge-free { color: #4caf50; margin-right: 8px; }
         .badge-occ { color: #f44336; }
 
-        /* Table Grid */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        /* Table Grid - 5 TAVOLI PER RIGA SU SMARTPHONE */
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
         .table-card {
-            aspect-ratio: 1; border-radius: 10px; padding: 8px; display: flex; flex-direction: column;
+            aspect-ratio: 1; border-radius: 8px; padding: 4px; display: flex; flex-direction: column;
             justify-content: space-between; align-items: center; text-align: center; cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); position: relative; overflow: hidden;
         }
         .table-card.free { background: #1b3e20; border: 1px solid #2e7d32; color: #81c784; }
         .table-card.free.disabled { background: #222; border-color: #444; color: #666; cursor: not-allowed; opacity: 0.6; }
         .table-card.occupied { background: #4a1919; border: 1px solid #c62828; color: #ef9a9a; }
-        .table-number { font-size: 20px; font-weight: bold; }
-        .table-status { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .table-client { font-size: 11px; word-break: break-word; color: #fff; font-weight: 600; line-height: 1.1; }
+        .table-number { font-size: 15px; font-weight: bold; margin-top: 2px; }
+        .table-status { font-size: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.2px; }
+        .table-client { font-size: 9px; word-break: break-word; color: #fff; font-weight: 600; line-height: 1.05; max-height: 20px; overflow: hidden; }
 
         /* Modal Overlay */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
@@ -91,9 +91,9 @@
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .section-tag { background: #2a2b30; color: #e5a93b; padding: 6px 10px; font-size: 12px; font-weight: bold; border-radius: 6px; margin: 12px 0 6px 0; border-left: 3px solid #e5a93b; }
 
-        .stat-card { background: #2a2b30; border: 1px solid #444; border-radius: 8px; padding: 12px; margin-bottom: 10px; text-align: center; }
-        .stat-val { font-size: 22px; font-weight: bold; color: #e5a93b; }
-        .stat-lbl { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .stat-card { background: #2a2b30; border: 1px solid #444; border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: center; }
+        .stat-val { font-size: 20px; font-weight: bold; color: #e5a93b; }
+        .stat-lbl { font-size: 10px; color: #aaa; text-transform: uppercase; }
 
         .reg-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         .reg-table th, .reg-table td { padding: 8px; text-align: left; border-bottom: 1px solid #333; }
@@ -106,8 +106,8 @@
         <div class="login-box">
             <div class="brand-logo">🍴</div>
             <div class="brand-title">Vecchio Frantoio</div>
-            <div class="brand-sub">Inserisci il codice di accesso per gestire le sale</div>
-            <input type="password" id="pin-input" placeholder="Codice di accesso (es. 1234)" pattern="[0-9]*" inputmode="numeric">
+            <div class="brand-sub">Inserisci la password di accesso per gestire le sale</div>
+            <input type="password" id="pin-input" placeholder="Password di accesso">
             <button class="btn" onclick="login()">Entra</button>
         </div>
     </div>
@@ -365,7 +365,7 @@
             <div class="modal-title">Registro Generale Prenotazioni</div>
             <div id="master-login-box">
                 <p style="font-size: 13px; color: #aaa; margin-bottom: 12px; text-align: center;">Area protetta. Inserisci il codice master per accedere.</p>
-                <input type="password" id="master-pin-input" placeholder="Codice master (es. 9999)">
+                <input type="password" id="master-pin-input" placeholder="Codice master">
                 <button class="btn" onclick="verifyMaster()">Sblocca Registro</button>
                 <button class="btn btn-cancel" onclick="closeModal('modal-master')">Chiudi</button>
             </div>
@@ -399,10 +399,11 @@
             { name: 'Sala Privée', tables: 9 }
         ];
 
-        const STAFF_PIN = "1234";
+        // NUOVA PASSWORD DIPENDENTI E CODICE MASTER
+        const STAFF_PIN = "max78";
         const MASTER_PIN = "9999";
 
-        let currentRoomIndex = 0; // 0..4 = Sale, 5 = Eventi
+        let currentRoomIndex = 0;
         let selectedTableId = null;
         let selectedBookingId = null;
 
@@ -444,7 +445,7 @@
                 initTabs();
                 renderTables();
             } else {
-                alert('Codice di accesso errato!');
+                alert('Password di accesso errata!');
             }
         }
 
@@ -520,7 +521,7 @@
                     card.className = 'table-card occupied';
                     card.innerHTML = `
                         <div class="table-number">${i}</div>
-                        <div class="table-status">OCCUPATO</div>
+                        <div class="table-status">OCC.</div>
                         <div class="table-client">${booking.name}</div>
                     `;
                     card.onclick = () => openDetailModal(booking);
@@ -530,7 +531,7 @@
                         card.className = 'table-card free disabled';
                         card.innerHTML = `
                             <div class="table-number">${i}</div>
-                            <div class="table-status">DISABILITATO</div>
+                            <div class="table-status">OFF</div>
                             <div></div>
                         `;
                         card.onclick = () => alert('Non è possibile inserire prenotazioni per date passate.');
@@ -678,13 +679,13 @@
 
             events.forEach(e => {
                 const card = document.createElement('div');
-                card.style.cssText = 'background:#1e1f23; border:1px solid #ab47bc; border-radius:10px; padding:15px; margin-bottom:12px;';
+                card.style.cssText = 'background:#1e1f23; border:1px solid #ab47bc; border-radius:10px; padding:12px; margin-bottom:10px;';
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px;">
-                        <span style="font-size:16px; font-weight:bold; color:#ce93d8;">🎉 ${e.name} (${e.type})</span>
-                        <span style="font-size:12px; color:#aaa;">📅 ${e.date} - ${e.time}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:6px;">
+                        <span style="font-size:15px; font-weight:bold; color:#ce93d8;">🎉 ${e.name} (${e.type})</span>
+                        <span style="font-size:11px; color:#aaa;">📅 ${e.date} - ${e.time}</span>
                     </div>
-                    <div style="margin-top:8px; font-size:13px; color:#ddd;">
+                    <div style="margin-top:6px; font-size:12px; color:#ddd;">
                         <p><b>Sala & Tavoli:</b> ${e.room} (${e.tables || 'Tutti'}) | <b>Persone:</b> ${e.guests}</p>
                         <p><b>Menu:</b> ${e.primo || 'N/D'}, ${e.secondo || 'N/D'}</p>
                         <p><b>Preventivo:</b> €${e.total || 0} (Acconto: €${e.deposit || 0})</p>
@@ -707,18 +708,15 @@
                 const g = parseInt(b.guests) || 1;
                 totalGuests += g;
 
-                // Conta Tavolo
                 const tKey = `${b.room} - Tavolo ${b.table}`;
                 if (!tableCounts[tKey]) tableCounts[tKey] = { count: 0, guests: 0, room: b.room, table: b.table };
                 tableCounts[tKey].count++;
                 tableCounts[tKey].guests += g;
 
-                // Conta Sala
                 if (!roomCounts[b.room]) roomCounts[b.room] = 0;
                 roomCounts[b.room]++;
             });
 
-            // Trova Tavolo Top
             let topTable = '-';
             let maxT = 0;
             Object.keys(tableCounts).forEach(k => {
@@ -728,7 +726,6 @@
                 }
             });
 
-            // Trova Sala Top
             let topRoom = '-';
             let maxR = 0;
             Object.keys(roomCounts).forEach(k => {
@@ -746,7 +743,6 @@
             document.getElementById('stat-top-room').innerText = topRoom;
             document.getElementById('stat-avg-guests').innerText = avgGuests;
 
-            // Tabella dettaglio
             const tbody = document.getElementById('stat-tables-body');
             tbody.innerHTML = '';
 
