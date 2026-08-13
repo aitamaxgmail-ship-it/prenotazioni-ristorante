@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vecchio Frantoio - Prenotazione Tavoli</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #121315; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Modalità Schermata intera per Login */
+        .screen { display: none; padding: 15px; width: 100%; max-width: 600px; margin: 0 auto; flex: 1; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* Login Box */
+        .login-box { background: #1e1f23; border: 1px solid #333; border-radius: 12px; padding: 25px; text-align: center; margin: auto; width: 100%; }
+        .brand-logo { font-size: 32px; margin-bottom: 5px; color: #e5a93b; }
+        .brand-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #fff; }
+        .brand-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+        
+        input, select, textarea {
+            width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 16px;
+            background: #2a2b30; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 15px; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #e5a93b; }
+
+        .btn {
+            width: 100%; padding: 12px; background: #e5a93b; border: none; border-radius: 8px;
+            color: #121315; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-cancel { background: #444; color: #fff; margin-top: 8px; }
+        .btn-danger { background: #d32f2f; color: #fff; }
+
+        /* Header App */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2b30; }
+        .header-title { font-size: 16px; font-weight: bold; color: #e5a93b; }
+        .btn-register { width: auto; padding: 6px 12px; font-size: 13px; background: #2a2b30; color: #e5a93b; border: 1px solid #e5a93b; }
+
+        /* Controls / Filtri */
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
+        .controls label { font-size: 11px; color: #aaa; text-transform: uppercase; }
+
+        /* Tabs Sale */
+        .tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 15px; }
+        .tab-btn {
+            padding: 8px 14px; background: #2a2b30; border: 1px solid #444; border-radius: 20px;
+            color: #ccc; font-size: 13px; white-space: nowrap; cursor: pointer;
+        }
+        .tab-btn.active { background: #e5a93b; color: #121315; font-weight: bold; border-color: #e5a93b; }
+
+        /* Room Title & Counter */
+        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .room-name { font-size: 18px; font-weight: bold; }
+        .counters { font-size: 12px; font-weight: bold; }
+        .badge-free { color: #4caf50; margin-right: 10px; }
+        .badge-occ { color: #f44336; }
+
+        /* Table Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .table-card {
+            aspect-ratio: 1; border-radius: 10px; padding: 8px; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center; text-align: center; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
+        }
+        .table-card.free { background: #1b3e20; border: 1px solid #2e7d32; color: #81c784; }
+        .table-card.occupied { background: #4a1919; border: 1px solid #c62828; color: #ef9a9a; }
+        .table-number { font-size: 20px; font-weight: bold; }
+        .table-status { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+        .table-client { font-size: 11px; word-break: break-word; color: #fff; font-weight: 600; line-height: 1.1; }
+
+        /* Modal Overlay */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1e1f23; border: 1px solid #333; border-radius: 12px; width: 100%; max-width: 450px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #e5a93b; text-align: center; }
+
+        /* Table details view */
+        .detail-row { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .detail-label { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .detail-val { font-size: 15px; font-weight: 500; margin-top: 2px; }
+
+        /* Register Table */
+        .reg-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .reg-table th, .reg-table td { padding: 8px; text-align: left; border-bottom: 1px solid #333; }
+        .reg-table th { color: #e5a93b; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: LOGIN -->
+    <div id="screen-login" class="screen active">
+        <div class="login-box">
+            <div class="brand-logo">🍴</div>
+            <div class="brand-title">Vecchio Frantoio</div>
+            <div class="brand-sub">Prenotazione Tavoli - Accedi per gestire le sale</div>
+            <input type="password" id="pin-input" placeholder="Codice di accesso (es. 1234)" pattern="[0-9]*" inputmode="numeric">
+            <button class="btn" onclick="login()">Entra</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: MAIN DASHBOARD -->
+    <div id="screen-app" class="screen">
+        <div class="header">
+            <div class="header-title">🌿 Vecchio Frantoio</div>
+            <button class="btn btn-register" onclick="openMasterModal()">📋 Registro</button>
+        </div>
+
+        <!-- CONTROLS: DATA, ORARIO, SERVIZIO -->
+        <div class="controls">
+            <div>
+                <label>Data</label>
+                <input type="date" id="filter-date" onchange="renderTables()">
+            </div>
+            <div>
+                <label>Orario</label>
+                <input type="time" id="filter-time" value="20:00" onchange="renderTables()">
+            </div>
+            <div>
+                <label>Servizio</label>
+                <select id="filter-service" onchange="renderTables()">
+                    <option value="Cena">Cena</option>
+                    <option value="Pranzo">Pranzo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TABS SALE -->
+        <div class="tabs" id="room-tabs">
+            <!-- Dinamici -->
+        </div>
+
+        <!-- ROOM TITLE & COUNTER -->
+        <div class="room-header">
+            <div class="room-name" id="current-room-name">Sala Esterna</div>
+            <div class="counters">
+                <span class="badge-free">🟢 Liberi: <span id="count-free">0</span></span>
+                <span class="badge-occ">🔴 Occupati: <span id="count-occ">0</span></span>
+            </div>
+        </div>
+
+        <!-- GRID TAVOLI -->
+        <div class="grid" id="tables-grid">
+            <!-- Dinamici -->
+        </div>
+    </div>
+
+    <!-- MODAL: PRENOTA TAVOLO -->
+    <div class="modal" id="modal-book">
+        <div class="modal-content">
+            <div class="modal-title" id="book-modal-title">Prenota Tavolo</div>
+            <label>Nome cliente</label>
+            <input type="text" id="book-name" placeholder="Es. Famiglia Rossi / Prova">
+            
+            <label>Coperti</label>
+            <input type="number" id="book-guests" value="2" min="1">
+            
+            <label>Telefono (opzionale)</label>
+            <input type="tel" id="book-phone" placeholder="Es. 3331234567">
+            
+            <label>Note (Allergie, richieste particolari...)</label>
+            <textarea id="book-notes" rows="2" placeholder="Es. Celiaco, seggiolone..."></textarea>
+            
+            <button class="btn" onclick="saveBooking()">Conferma prenotazione</button>
+            <button class="btn btn-cancel" onclick="closeModal('modal-book')">Annulla</button>
+        </div>
+    </div>
+
+    <!-- MODAL: DETTAGLIO PRENOTAZIONE -->
+    <div class="modal" id="modal-detail">
+        <div class="modal-content">
+            <div class="modal-title" id="detail-modal-title">Tavolo 1 - Sala Esterna</div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Cliente</div>
+                <div class="detail-val" id="detail-name">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Coperti</div>
+                <div class="detail-val" id="detail-guests">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Quando</div>
+                <div class="detail-val" id="detail-when">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Telefono</div>
+                <div class="detail-val" id="detail-phone">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Note</div>
+                <div class="detail-val" id="detail-notes">-</div>
+            </div>
+
+            <button class="btn btn-danger" onclick="requestDeleteCurrentBooking()">Cancella Prenotazione</button>
+            <button class="btn btn-cancel" onclick="closeModal('modal-detail')">Chiudi</button>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRO PRENOTAZIONI (MASTER) -->
+    <div class="modal" id="modal-master">
+        <div class="modal-content">
+            <div class="modal-title">Registro Prenotazioni</div>
+            <div id="master-login-box">
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 12px; text-align: center;">Area protetta. Inserisci il codice master per accedere.</p>
+                <input type="password" id="master-pin-input" placeholder="Codice master (es. 9999)">
+                <button class="btn" onclick="verifyMaster()">Sblocca Registro</button>
+                <button class="btn btn-cancel" onclick="closeModal('modal-master')">Chiudi</button>
+            </div>
+            <div id="master-content-box" style="display: none;">
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="reg-table">
+                        <thead>
+                            <tr>
+                                <th>Tav.</th>
+                                <th>Sala</th>
+                                <th>Cliente</th>
+                                <th>Cop.</th>
+                                <th>Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="register-list">
+                            <!-- Dinamici -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-cancel" style="margin-top: 15px;" onclick="closeModal('modal-master')">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAZIONE SALE E TAVOLI
+        const ROOMS = [
+            { name: 'Sala Esterna', tables: 18 },
+            { name: 'Sala 1', tables: 15 },
+            { name: 'Sala 2', tables: 12 },
+            { name: 'Sala Vetrata', tables: 10 },
+            { name: 'Sala Privée', tables: 9 }
+        ];
+
+        const STAFF_PIN = "1234";
+        const MASTER_PIN = "9999";
+
+        let currentRoomIndex = 0;
+        let selectedTableId = null;
+        let selectedBookingId = null;
+
+        // Inizializzazione Data odierna
+        document.getElementById('filter-date').valueAsDate = new Date();
+
+        // Caricamento prenotazioni da LocalStorage
+        function getBookings() {
+            return JSON.parse(localStorage.getItem('vf_bookings') || '[]');
+        }
+
+        function saveBookings(bookings) {
+            localStorage.setItem('vf_bookings', JSON.stringify(bookings));
+        }
+
+        // LOGIN
+        function login() {
+            const pin = document.getElementById('pin-input').value;
+            if (pin === STAFF_PIN || pin === MASTER_PIN) {
+                document.getElementById('screen-login').classList.remove('active');
+                document.getElementById('screen-app').classList.add('active');
+                initTabs();
+                renderTables();
+            } else {
+                alert('Codice di accesso errato! (Default: 1234)');
+            }
+        }
+
+        // INIZIALIZZA TABS
+        function initTabs() {
+            const tabsContainer = document.getElementById('room-tabs');
+            tabsContainer.innerHTML = '';
+            ROOMS.forEach((room, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${idx === currentRoomIndex ? 'active' : ''}`;
+                btn.innerText = `${room.name} (${room.tables})`;
+                btn.onclick = () => {
+                    currentRoomIndex = idx;
+                    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+                    renderTables();
+                };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        // RENDERING TAVOLI
+        function renderTables() {
+            const room = ROOMS[currentRoomIndex];
+            document.getElementById('current-room-name').innerText = room.name;
+
+            const date = document.getElementById('filter-date').value;
+            const service = document.getElementById('filter-service').value;
+            
+            const bookings = getBookings();
+            const grid = document.getElementById('tables-grid');
+            grid.innerHTML = '';
+
+            let freeCount = 0;
+            let occCount = 0;
+
+            for (let i = 1; i <= room.tables; i++) {
+                // Cerca prenotazione corrispondente a stanza, tavolo, data e servizio
+                const booking = bookings.find(b => 
+                    b.room === room.name && 
+                    b.table === i && 
+                    b.date === date && 
+                    b.service === service
+                );
+
+                const card = document.createElement('div');
+                card.className = `table-card ${booking ? 'occupied' : 'free'}`;
+                
+                if (booking) {
+                    occCount++;
+                    card.innerHTML = `
+                        <div class="table-number">${i}</div>
+                        <div class="table-status">OCCUPATO</div>
+                        <div class="table-client">${booking.name}</div>
+                    `;
+                    card.onclick = () => openDetailModal(booking);
+                } else {
+                    freeCount++;
+                    card.innerHTML = `
+                        <div class="table-number">${i}</div>
+                        <div class="table-status">LIBERO</div>
+                        <div></div>
+                    `;
+                    card.onclick = () => openBookModal(i);
+                }
+                grid.appendChild(card);
+            }
+
+            document.getElementById('count-free').innerText = freeCount;
+            document.getElementById('count-occ').innerText = occCount;
+        }
+
+        // MODAL PRENOTAZIONE
+        function openBookModal(tableNum) {
+            selectedTableId = tableNum;
+            const roomName = ROOMS[currentRoomIndex].name;
+            document.getElementById('book-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${roomName}`;
+            document.getElementById('book-name').value = '';
+            document.getElementById('book-guests').value = '2';
+            document.getElementById('book-phone').value = '';
+            document.getElementById('book-notes').value = '';
+            document.getElementById('modal-book').classList.add('active');
+        }
+
+        function saveBooking() {
+            const name = document.getElementById('book-name').value.trim();
+            if (!name) { alert('Inserisci il nome del cliente!'); return; }
+
+            const newBooking = {
+                id: Date.now(),
+                room: ROOMS[currentRoomIndex].name,
+                table: selectedTableId,
+                date: document.getElementById('filter-date').value,
+                time: document.getElementById('filter-time').value,
+                service: document.getElementById('filter-service').value,
+                name: name,
+                guests: document.getElementById('book-guests').value,
+                phone: document.getElementById('book-phone').value || 'N/D',
+                notes: document.getElementById('book-notes').value || 'Nessuna'
+            };
+
+            const bookings = getBookings();
+            bookings.push(newBooking);
+            saveBookings(bookings);
+
+            closeModal('modal-book');
+            renderTables();
+        }
+
+        // MODAL DETTAGLIO
+        function openDetailModal(booking) {
+            selectedBookingId = booking.id;
+            document.getElementById('detail-modal-title').innerText = `Tavolo ${booking.table} - ${booking.room}`;
+            document.getElementById('detail-name').innerText = booking.name;
+            document.getElementById('detail-guests').innerText = `${booking.guests} Persone`;
+            document.getElementById('detail-when').innerText = `${booking.date} - ore ${booking.time} (${booking.service})`;
+            document.getElementById('detail-phone').innerText = booking.phone;
+            document.getElementById('detail-notes').innerText = booking.notes;
+            
+            document.getElementById('modal-detail').classList.add('active');
+        }
+
+        function requestDeleteCurrentBooking() {
+            const pin = prompt('Inserisci il codice Master per cancellare (Default: 9999):');
+            if (pin === MASTER_PIN) {
+                deleteBooking(selectedBookingId);
+                closeModal('modal-detail');
+            } else if (pin !== null) {
+                alert('Codice Master errato!');
+            }
+        }
+
+        function deleteBooking(id) {
+            let bookings = getBookings();
+            bookings = bookings.filter(b => b.id !== id);
+            saveBookings(bookings);
+            renderTables();
+            if (document.getElementById('modal-master').classList.contains('active')) {
+                renderRegisterList();
+            }
+        }
+
+        // REGISTRO MASTER
+        function openMasterModal() {
+            document.getElementById('master-login-box').style.display = 'block';
+            document.getElementById('master-content-box').style.display = 'none';
+            document.getElementById('master-pin-input').value = '';
+            document.getElementById('modal-master').classList.add('active');
+        }
+
+        function verifyMaster() {
+            const pin = document.getElementById('master-pin-input').value;
+            if (pin === MASTER_PIN) {
+                document.getElementById('master-login-box').style.display = 'none';
+                document.getElementById('master-content-box').style.display = 'block';
+                renderRegisterList();
+            } else {
+                alert('Codice Master errato!');
+            }
+        }
+
+        function renderRegisterList() {
+            const bookings = getBookings();
+            const date = document.getElementById('filter-date').value;
+            const filtered = bookings.filter(b => b.date === date);
+            
+            const list = document.getElementById('register-list');
+            list.innerHTML = '';
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Nessuna prenotazione per questa data.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(b => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${b.table}</b></td>
+                    <td>${b.room}</td>
+                    <td>${b.name}</td>
+                    <td>${b.guests}</td>
+                    <td><button style="background:none; border:none; color:#f44336; cursor:pointer;" onclick="deleteBooking(${b.id})">🗑️</button></td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+    </script>
+</body>
+</html>
