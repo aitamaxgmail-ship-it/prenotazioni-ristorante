@@ -1,959 +1,206 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vecchio Frantoio - Gestione Prenotazioni Cloud</title>
+// =========================================================================
+// 1. FUNZIONE DI NORMALIZZAZIONE (Retrocompatibilità - Protegge i vecchi dati)
+// =========================================================================
+function normalizzaEvento(ev) {
+  if (!ev) ev = {};
+  return {
+    id: ev.id || '',
+    nomeEvento: ev.nomeEvento || 'Evento senza nome',
+    sala: ev.sala || 'Non specificata',
+    tavoli: ev.tavoli || '-',
     
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    // Retrocompatibilità: usa ospitiAdulti se presente, altrimenti il vecchio campo 'ospiti'
+    ospitiAdulti: Number(ev.ospitiAdulti !== undefined ? ev.ospitiAdulti : (ev.ospiti || 0)),
+    prezzoAdulto: Number(ev.prezzoAdulto !== undefined ? ev.prezzoAdulto : (ev.prezzo || 0)),
+    menuAdulti: ev.menuAdulti || ev.menu || 'Non specificato',
+    
+    // Nuovi campi dedicati ai bambini
+    ospitiBambini: Number(ev.ospitiBambini || 0),
+    prezzoBambino: Number(ev.prezzoBambino || 0),
+    menuBambini: ev.menuBambini || '',
+    
+    addobbiColori: ev.addobbiColori || '-',
+    noteAllergie: ev.noteAllergie || '-'
+  };
+}
 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 30px; display: flex; justify-content: center; }
-        
-        .app-container { width: 100%; max-width: 500px; margin: 0 auto; }
+// =========================================================================
+// 2. GENERAZIONE SCHEDA EVENTO (Interfaccia Principale)
+// NO Totale € e NO Prezzi a persona. Mostra Menu Adulti e Menu Bimbi.
+// =========================================================================
+function generaHtmlCardEvento(eventoGrezzo) {
+  const ev = normalizzaEvento(eventoGrezzo);
+  
+  // Costruzione stringa ospiti
+  let testoOspiti = `👥 ${ev.ospitiAdulti} Adulti`;
+  if (ev.ospitiBambini > 0) {
+    testoOspiti += ` + ${ev.ospitiBambini} Bimbi`;
+  }
 
-        /* LOGIN OVERLAY */
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #121214; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { background: #1c1c20; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
-
-        /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .logo { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
-        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; font-weight: 700; margin-left: 5px; }
-        .header-btns { display: flex; gap: 4px; flex-wrap: wrap; }
-        .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 3px; }
-        .btn-hdr-print { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 700; }
-
-        /* CONTROLS BAR */
-        .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-        .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
-        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; }
-
-        /* TABS SCROLL BAR */
-        .tabs-wrapper { 
-            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; 
-            scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; -webkit-overflow-scrolling: touch; 
-        }
-        .tabs-wrapper::-webkit-scrollbar { height: 4px; }
-        .tabs-wrapper::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
-
-        .tab-pill { background: #27272a; color: #d4d4d8; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
-        .tab-pill.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
-        .tab-pill.event-tab { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
-
-        /* SECTION SUBHEADER */
-        .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .sec-title { font-size: 16px; font-weight: 700; }
-        .counters { font-size: 12px; font-weight: 600; }
-        .c-free { color: #22c55e; margin-right: 8px; }
-        .c-occ { color: #ef4444; }
-
-        /* GRID TABLES 5 COLUMNS */
-        .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
-        .table-card { aspect-ratio: 1 / 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
-        .table-card:active { transform: scale(0.95); }
-        .table-card.free { background: #092615; border: 1.5px solid #22c55e; color: #22c55e; }
-        .table-card.occupied { background: #380d0f; border: 1.5px solid #ef4444; color: #ef4444; }
-        
-        .t-num { font-size: 16px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 2px; }
-        .t-status { font-size: 9px; font-weight: 700; text-transform: uppercase; }
-        .t-name { font-size: 9px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
-        .t-occ-badge { background: #ef4444; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
-
-        /* MODALS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
-        .modal.active { display: flex; }
-        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .modal-title { font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; text-align: center; }
-        .form-group { margin-bottom: 10px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 3px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; font-size: 13px; outline: none; }
-        .form-group textarea { resize: vertical; height: 50px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-        .btn-gold { background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
-        .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
-        .btn-cancel { background: #27272a; color: #e4e4e7; font-weight: 600; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 6px; }
-
-        .sec-banner { background: #27272a; border-left: 3px solid #f59e0b; padding: 5px 8px; font-weight: 700; font-size: 12px; color: #f59e0b; margin: 12px 0 8px 0; }
-        .empty-box { text-align: center; color: #71717a; font-size: 13px; padding: 30px 0; }
-    </style>
-</head>
-<body>
-
-    <div id="login-overlay">
-        <div class="login-card">
-            <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px;">🌿 Vecchio Frantoio</h2>
-            <p style="font-size:12px; color:#a1a1aa; margin-bottom:15px;">Inserisci la password di accesso:</p>
-            <form onsubmit="checkPassword(event)">
-                <input type="password" id="login-pass" placeholder="Password" style="width:100%; background:#27272a; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:8px; font-size:14px; outline:none; text-align:center; margin-bottom:12px;" required>
-                <button type="submit" class="btn-gold">Accedi</button>
-            </form>
-            <div id="login-error" style="color:#ef4444; font-size:11px; margin-top:10px; display:none; font-weight:600;">Password errata!</div>
+  return `
+    <div class="event-card" id="card-event-${ev.id}">
+      <div class="event-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; color: #ffeb3b;">🎉 ${ev.nomeEvento}</h3>
         </div>
+      
+      <div class="event-body" style="margin-top: 10px; line-height: 1.6;">
+        <p style="margin: 4px 0;">📍 <strong>${ev.sala}</strong> — ${testoOspiti} (Tavoli: ${ev.tavoli})</p>
+        <p style="margin: 4px 0;">🍽️ <strong>Menu Adulti:</strong> ${ev.menuAdulti}</p>
+        ${(ev.ospitiBambini > 0 || ev.menuBambini) ? `<p style="margin: 4px 0;">🎈 <strong>Menu Bimbi:</strong> ${ev.menuBambini || 'Menu Standard Bimbi'}</p>` : ''}
+        <p style="margin: 4px 0;">🎨 <strong>Addobbi/Colori:</strong> ${ev.addobbiColori}</p>
+        <p style="margin: 4px 0; color: #ff5252;">⚠️ <strong>Note/Allergie:</strong> ${ev.noteAllergie}</p>
+      </div>
+
+      <div class="event-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+        <button type="button" class="btn-edit" onclick="apriModalEvento('${ev.id}')">✏️ Modifica Evento</button>
+        <button type="button" class="btn-delete" onclick="eliminaEvento('${ev.id}')">🗑️ Elimina</button>
+      </div>
     </div>
+  `;
+}
 
-    <div class="app-container">
+// =========================================================================
+// 3. FORM NUOVO / MODIFICA EVENTO (Finestra / Modal)
+// =========================================================================
+function generaHtmlFormEvento(eventoGrezzo = {}) {
+  const ev = normalizzaEvento(eventoGrezzo);
+  
+  return `
+    <form id="formEvento" onsubmit="salvaEvento(event, '${ev.id}')" style="display: flex; flex-direction: column; gap: 12px; max-width: 500px; margin: auto;">
+      <h3 style="margin: 0 0 10px 0;">${ev.id ? '✏️ Modifica Evento' : '➕ Nuovo Evento'}</h3>
+      
+      <div>
+        <label>Nome Evento / Cliente:</label>
+        <input type="text" id="ev_nomeEvento" value="${ev.nomeEvento}" required class="form-control" style="width: 100%;" placeholder="es. Rossi1 (Compleanno)">
+      </div>
 
-        <header>
-            <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
-            <div class="header-btns">
-                <button class="btn-hdr btn-hdr-print" onclick="openPrintModal()">🔒 🖨️ Stampa / Storico</button>
-                <button class="btn-hdr" onclick="exportBackup()">💾 Backup</button>
-                <button class="btn-hdr" onclick="document.getElementById('import-file').click()">📂 Carica</button>
-                <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBackup(event)">
-                <button class="btn-hdr" onclick="lockApp()">🔒 Blocca</button>
-            </div>
-        </header>
-
-        <div class="controls-card">
-            <div class="ctrl-group">
-                <label>Data</label>
-                <input type="date" id="current-date" onchange="validateDateAndRender()">
-            </div>
-            <div class="ctrl-group">
-                <label>Orario</label>
-                <input type="time" id="current-time" value="20:00" onchange="renderView()">
-            </div>
-            <div class="ctrl-group">
-                <label>Servizio</label>
-                <select id="current-shift" onchange="renderView()">
-                    <option value="Cena">Cena</option>
-                    <option value="Pranzo">Pranzo</option>
-                </select>
-            </div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label>Sala:</label>
+          <input type="text" id="ev_sala" value="${ev.sala}" required class="form-control" style="width: 100%;" placeholder="es. Sala Esterna">
         </div>
-
-        <div class="tabs-wrapper" id="tabs-wrapper"></div>
-
-        <div id="main-view"></div>
-
-    </div>
-
-    <div class="modal" id="print-modal">
-        <div class="modal-content" style="border-top-color: #3b82f6;">
-            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico</div>
-            <form onsubmit="executeFilteredPrint(event)">
-                
-                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Seleziona Date (Include Retroattive)</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Data Inizio</label>
-                        <input type="date" id="pr-date-start">
-                    </div>
-                    <div class="form-group">
-                        <label>Data Fine</label>
-                        <input type="date" id="pr-date-end">
-                    </div>
-                </div>
-                
-                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Filtra per Sale & Eventi</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Filtra Sala</label>
-                        <select id="pr-room">
-                            <option value="ALL">Tutte le Sale</option>
-                            <option value="Sala Esterna">Sala Esterna</option>
-                            <option value="Sala 1">Sala 1</option>
-                            <option value="Sala 2">Sala 2</option>
-                            <option value="Sala Vetrata">Sala Vetrata</option>
-                            <option value="Sala Privée">Sala Privée</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo Evento</label>
-                        <select id="pr-event-type">
-                            <option value="ALL">Tutti gli Eventi</option>
-                            <option value="Compleanno">Compleanno</option>
-                            <option value="Matrimonio">Matrimonio</option>
-                            <option value="Laurea">Laurea</option>
-                            <option value="Cresima / Comunione">Cresima / Comunione</option>
-                            <option value="Altro">Altro</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Cosa Includere</div>
-                <div class="form-group">
-                    <label>Includi nel Report</label>
-                    <select id="pr-include">
-                        <option value="BOTH">Prenotazioni Tavoli + Eventi</option>
-                        <option value="BOOKINGS">Solo Prenotazioni Tavoli</option>
-                        <option value="EVENTS">Solo Eventi & Festeggiamenti</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn-hdr btn-hdr-print" style="width:100%; padding:12px; font-size:14px; justify-content:center; margin-top:10px;">🖨️ Genera & Stampa Report Filtro</button>
-                <button type="button" class="btn-cancel" onclick="closeModal('print-modal')">Annulla</button>
-            </form>
+        <div style="flex: 1;">
+          <label>Tavoli:</label>
+          <input type="text" id="ev_tavoli" value="${ev.tavoli}" class="form-control" style="width: 100%;" placeholder="es. 1-10">
         </div>
-    </div>
+      </div>
 
-    <div class="modal" id="booking-modal">
-        <div class="modal-content">
-            <div class="modal-title" id="booking-modal-title">Prenota Tavolo</div>
-            <form onsubmit="saveBooking(event)">
-                <input type="hidden" id="modal-table-num">
-                <div class="form-group">
-                    <label>Nome cliente</label>
-                    <input type="text" id="b-name" placeholder="Es. Famiglia Rossi / Prova" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Coperti</label>
-                        <input type="number" id="b-guests" value="2" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Telefono</label>
-                        <input type="tel" id="b-phone" placeholder="Es. 3331234567">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Note (Allergie, intolleranze, richieste...)</label>
-                    <textarea id="b-notes" placeholder="Es. Celiaco, seggiolone..."></textarea>
-                </div>
-                <button type="submit" class="btn-gold">Conferma prenotazione</button>
-                <button type="button" class="btn-cancel" onclick="closeModal('booking-modal')">Annulla</button>
-            </form>
+      <hr style="border: 0.5px solid #444; width: 100%; margin: 5px 0;">
+
+      <h4 style="margin: 0; color: #4caf50;">👥 Adulti</h4>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label>N° Adulti:</label>
+          <input type="number" id="ev_ospitiAdulti" value="${ev.ospitiAdulti}" min="0" class="form-control" style="width: 100%;">
         </div>
-    </div>
-
-    <div class="modal" id="event-modal">
-        <div class="modal-content" style="border-top-color: #8b5cf6;">
-            <div class="modal-title" id="event-modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
-            <form onsubmit="saveEvent(event)">
-                
-                <input type="hidden" id="ev-id">
-
-                <div class="sec-banner">Dati Cliente & Evento</div>
-                <div class="form-group">
-                    <label>Nome Cliente / Festeggiato</label>
-                    <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Telefono</label>
-                        <input type="tel" id="ev-phone" placeholder="3331234567">
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo Evento</label>
-                        <select id="ev-type">
-                            <option value="Compleanno">Compleanno</option>
-                            <option value="Matrimonio">Matrimonio</option>
-                            <option value="Laurea">Laurea</option>
-                            <option value="Cresima / Comunione">Cresima / Comunione</option>
-                            <option value="Altro">Altro</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="sec-banner">Spazio & Sale Riservate</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Sala Riservata</label>
-                        <select id="ev-room"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>N° Persone / Coperti</label>
-                        <input type="number" id="ev-guests" value="30">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Tavoli Riservati (es. 1, 2, 3 o Tutti)</label>
-                    <input type="text" id="ev-tables" placeholder="Es. Tavoli 1, 2, 3 e 4">
-                </div>
-
-                <div class="sec-banner">Menu & Portate</div>
-                <div class="form-group">
-                    <label>Benvenuto</label>
-                    <input type="text" id="ev-welcome" placeholder="Es. Prosecco e stuzzichini">
-                </div>
-                <div class="form-group">
-                    <label>Antipasto</label>
-                    <input type="text" id="ev-starter" placeholder="Es. Tagliere Frantoio e frittelline">
-                </div>
-                <div class="form-group">
-                    <label>Primo / i</label>
-                    <input type="text" id="ev-first" placeholder="Es. Paccheri ai funghi e salsiccia">
-                </div>
-                <div class="form-group">
-                    <label>Secondo / i</label>
-                    <input type="text" id="ev-second" placeholder="Es. Grigliata mista con patate">
-                </div>
-                <div class="form-group">
-                    <label>Frutta & Dolci / Torta</label>
-                    <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie e frutta di stagione">
-                </div>
-
-                <div class="sec-banner">Dettagli & Extra</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Addobbi / Colori / Tovaglia</label>
-                        <input type="text" id="ev-decor" placeholder="Es. Palloncini blu, Tovaglia Bianca e Verde">
-                    </div>
-                    <div class="form-group">
-                        <label>Musica / SIAE</label>
-                        <input type="text" id="ev-music" placeholder="Es. DJ set / SIAE a carico cliente">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Intolleranze / Allergie / Variazioni Persone</label>
-                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci, 1 vegetariano, 3 bambini">
-                </div>
-
-                <div class="sec-banner">Preventivo Economico (€)</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Prezzo a Persona (€)</label>
-                        <input type="number" id="ev-price-pp" placeholder="Es. 35" oninput="calcEventTotal()">
-                    </div>
-                    <div class="form-group">
-                        <label>Totale Evento (€)</label>
-                        <input type="number" id="ev-price-total" placeholder="Totale">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Acconto Versato (€)</label>
-                        <input type="number" id="ev-deposit" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Orario di Uscita</label>
-                        <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-purple">💾 Salva / Aggiorna Evento nel Cloud</button>
-                <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
-            </form>
+        <div style="flex: 1;">
+          <label>Prezzo / Adulto (€):</label>
+          <input type="number" step="0.5" id="ev_prezzoAdulto" value="${ev.prezzoAdulto}" class="form-control" style="width: 100%;" placeholder="es. 35">
         </div>
+      </div>
+      <div>
+        <label>Menu Adulti:</label>
+        <textarea id="ev_menuAdulti" rows="2" class="form-control" style="width: 100%;" placeholder="es. Gran Buffet di Pesce, Risotto, Grigliata...">${ev.menuAdulti}</textarea>
+      </div>
+
+      <hr style="border: 0.5px solid #444; width: 100%; margin: 5px 0;">
+
+      <h4 style="margin: 0; color: #ff9800;">🎈 Bambini</h4>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label>N° Bambini:</label>
+          <input type="number" id="ev_ospitiBambini" value="${ev.ospitiBambini}" min="0" class="form-control" style="width: 100%;">
+        </div>
+        <div style="flex: 1;">
+          <label>Prezzo / Bimbo (€):</label>
+          <input type="number" step="0.5" id="ev_prezzoBambino" value="${ev.prezzoBambino}" class="form-control" style="width: 100%;" placeholder="es. 15">
+        </div>
+      </div>
+      <div>
+        <label>Menu Bimbi:</label>
+        <textarea id="ev_menuBambini" rows="2" class="form-control" style="width: 100%;" placeholder="es. Pennette al pomodoro, Cotoletta e Patatine">${ev.menuBambini}</textarea>
+      </div>
+
+      <hr style="border: 0.5px solid #444; width: 100%; margin: 5px 0;">
+
+      <div>
+        <label>🎨 Addobbi / Colori:</label>
+        <input type="text" id="ev_addobbiColori" value="${ev.addobbiColori}" class="form-control" style="width: 100%;" placeholder="es. azzurro">
+      </div>
+
+      <div>
+        <label>⚠️ Note / Allergie:</label>
+        <textarea id="ev_noteAllergie" rows="2" class="form-control" style="width: 100%;" placeholder="es. Lattosio 1 px">${ev.noteAllergie}</textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" onclick="chiudiModalEvento()">Annulla</button>
+        <button type="submit" class="btn-primary" style="background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 4px;">💾 Salva Evento</button>
+      </div>
+    </form>
+  `;
+}
+
+// =========================================================================
+// 4. ESTRAZIONE DATI PER IL SALVATAGGIO IN FIREBASE
+// Mantiene anche i vecchi campi 'ospiti' e 'prezzo' per compatibilità
+// =========================================================================
+function estraiDatiDaForm() {
+  const ospitiAdulti = Number(document.getElementById('ev_ospitiAdulti').value) || 0;
+  const ospitiBambini = Number(document.getElementById('ev_ospitiBambini').value) || 0;
+  const prezzoAdulto = Number(document.getElementById('ev_prezzoAdulto').value) || 0;
+  const prezzoBambino = Number(document.getElementById('ev_prezzoBambino').value) || 0;
+
+  return {
+    nomeEvento: document.getElementById('ev_nomeEvento').value.trim(),
+    sala: document.getElementById('ev_sala').value.trim(),
+    tavoli: document.getElementById('ev_tavoli').value.trim(),
+    
+    // Nuovi campi separati
+    ospitiAdulti: ospitiAdulti,
+    prezzoAdulto: prezzoAdulto,
+    menuAdulti: document.getElementById('ev_menuAdulti').value.trim(),
+    
+    ospitiBambini: ospitiBambini,
+    prezzoBambino: prezzoBambino,
+    menuBambini: document.getElementById('ev_menuBambini').value.trim(),
+    
+    addobbiColori: document.getElementById('ev_addobbiColori').value.trim(),
+    noteAllergie: document.getElementById('ev_noteAllergie').value.trim(),
+
+    // CAMPI DUALI DI SICUREZZA (Impediscono perdite di dati su vecchi report)
+    ospiti: ospitiAdulti + ospitiBambini,
+    prezzo: prezzoAdulto
+  };
+}
+
+// =========================================================================
+// 5. STAMPA / STORICO (Sotto Chiave Master)
+// I prezzi e il totale compaiono SOLO quando si attiva la Chiave Master o in Stampa
+// =========================================================================
+function generaHtmlStampaEvento(eventoGrezzo, isChiaveMasterAttiva = false) {
+  const ev = normalizzaEvento(eventoGrezzo);
+  
+  const totaleAdulti = ev.ospitiAdulti * ev.prezzoAdulto;
+  const totaleBambini = ev.ospitiBambini * ev.prezzoBambino;
+  const totaleGenerale = totaleAdulti + totaleBambini;
+
+  return `
+    <div class="stampa-evento-item" style="border-bottom: 1px solid #ddd; padding: 10px 0;">
+      <h4>${ev.nomeEvento} — ${ev.sala} (Tavoli: ${ev.tavoli})</h4>
+      <p><strong>Adulti:</strong> ${ev.ospitiAdulti} px | <strong>Menu Adulti:</strong> ${ev.menuAdulti}</p>
+      ${ev.ospitiBambini > 0 ? `<p><strong>Bambini:</strong> ${ev.ospitiBambini} px | <strong>Menu Bimbi:</strong> ${ev.menuBambini}</p>` : ''}
+      <p><strong>Addobbi:</strong> ${ev.addobbiColori} | <strong>Note/Allergie:</strong> ${ev.noteAllergie}</p>
+      
+      ${isChiaveMasterAttiva ? `
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 4px; margin-top: 6px; color: #166534;">
+          <p style="margin: 2px 0;">💰 Adulti: ${ev.ospitiAdulti} × ${ev.prezzoAdulto} € = ${totaleAdulti} €</p>
+          ${ev.ospitiBambini > 0 ? `<p style="margin: 2px 0;">💰 Bambini: ${ev.ospitiBambini} × ${ev.prezzoBambino} € = ${totaleBambini} €</p>` : ''}
+          <p style="margin: 4px 0; font-size: 1.1em; font-weight: bold;">💶 TOTALE EVENTO: ${totaleGenerale} €</p>
+        </div>
+      ` : `
+        <p style="font-size: 0.9em; color: #888; margin-top: 4px;"><em>🔒 Dettagli economici visibili sbloccando la Chiave Master.</em></p>
+      `}
     </div>
-
-    <script>
-        // ==========================================
-        // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVLYQuJFXNPQOc4NmCK6xxgQu8llqTk84",
-            authDomain: "vecchiofrantoio-38c10.firebaseapp.com",
-            databaseURL: "https://vecchiofrantoio-38c10-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "vecchiofrantoio-38c10",
-            storageBucket: "vecchiofrantoio-38c10.firebasestorage.app",
-            messagingSenderId: "1062473587372",
-            appId: "1:1062473587372:web:984f7424b56f31b7571d09",
-            measurementId: "G-CRM1C9YHC8"
-        };
-
-        const MASTER_DELETE_PASS = "nikita78"; // Password Master
-
-        let db = null;
-        window.vf_bookings = [];
-        window.vf_events = [];
-
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-
-            // Sincronizzazione Realtime Prenotazioni
-            db.ref('bookings').on('value', (snapshot) => {
-                const val = snapshot.val();
-                window.vf_bookings = val ? Object.values(val) : [];
-                renderView();
-            });
-
-            // Sincronizzazione Realtime Eventi
-            db.ref('events').on('value', (snapshot) => {
-                const val = snapshot.val();
-                window.vf_events = val ? Object.values(val) : [];
-                renderView();
-            });
-        } catch(err) {
-            console.error("Errore di connessione a Firebase:", err);
-            document.getElementById('net-status').innerText = '⚠️ Local Mode';
-            document.getElementById('net-status').style.color = '#f59e0b';
-        }
-
-        function getBookings() { return window.vf_bookings || []; }
-        function getEvents() { return window.vf_events || []; }
-
-        // CONTROL ACCESS & LOCK
-        function checkPassword(e) {
-            e.preventDefault();
-            const pass = document.getElementById('login-pass').value;
-            if (pass === 'max78') {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('login-pass').value = '';
-                document.getElementById('login-error').style.display = 'none';
-            } else {
-                document.getElementById('login-error').style.display = 'block';
-            }
-        }
-
-        function lockApp() {
-            document.getElementById('login-overlay').style.display = 'flex';
-        }
-
-        // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
-        function checkMasterPass() {
-            const pass = prompt("🔐 Inserisci la Password Master per accedere:");
-            if (pass === MASTER_DELETE_PASS) {
-                return true;
-            } else {
-                if (pass !== null) alert("❌ Password errata! Accesso negato.");
-                return false;
-            }
-        }
-
-        // BACKUP & IMPORT
-        function exportBackup() {
-            const data = { bookings: getBookings(), events: getEvents(), exportDate: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup_frantoio_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importBackup(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.bookings && db) {
-                        const bObj = {};
-                        data.bookings.forEach(b => { 
-                            const id = b.id || ('b_' + Date.now() + Math.random().toString(36).substr(2, 5));
-                            b.id = id;
-                            bObj[id] = b; 
-                        });
-                        db.ref('bookings').set(bObj);
-                    }
-                    if (data.events && db) {
-                        const eObj = {};
-                        data.events.forEach(ev => { 
-                            const id = ev.id || ('ev_' + Date.now() + Math.random().toString(36).substr(2, 5));
-                            ev.id = id;
-                            eObj[id] = ev; 
-                        });
-                        db.ref('events').set(eObj);
-                    }
-                    alert('Dati caricati e sincronizzati sul Cloud!');
-                } catch (err) {
-                    alert('Errore nel file di backup.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // ROOMS CONFIG
-        const ROOMS = {
-            "Sala Esterna": 18,
-            "Sala 1": 15,
-            "Sala 2": 12,
-            "Sala Vetrata": 10,
-            "Sala Privée": 9
-        };
-
-        let currentActiveTab = "Sala Esterna";
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('current-date');
-            dateInput.value = today;
-            dateInput.min = today; // BLOCCO DATE RETROATTIVE IN APPLICAZIONE
-
-            setupRoomSelects();
-            renderView();
-
-            const tabsWrapper = document.getElementById('tabs-wrapper');
-            tabsWrapper.addEventListener('wheel', (evt) => {
-                if (evt.deltaY !== 0) {
-                    evt.preventDefault();
-                    tabsWrapper.scrollLeft += evt.deltaY;
-                }
-            }, { passive: false });
-        });
-
-        function validateDateAndRender() {
-            const dateInput = document.getElementById('current-date');
-            const today = new Date().toISOString().split('T')[0];
-            if (dateInput.value < today) {
-                alert("⚠️ Non è possibile selezionare una data passata!");
-                dateInput.value = today;
-            }
-            renderView();
-        }
-
-        function setupRoomSelects() {
-            const evRoom = document.getElementById('ev-room');
-            if(!evRoom) return;
-            evRoom.innerHTML = '';
-            Object.keys(ROOMS).forEach(r => { evRoom.innerHTML += `<option value="${r}">${r}</option>`; });
-        }
-
-        function renderTabs() {
-            const wrapper = document.getElementById('tabs-wrapper');
-            wrapper.innerHTML = '';
-
-            Object.keys(ROOMS).forEach(r => {
-                const btn = document.createElement('button');
-                btn.className = `tab-pill ${r === currentActiveTab ? 'active' : ''}`;
-                btn.innerText = `${r} (${ROOMS[r]})`;
-                btn.onclick = () => { currentActiveTab = r; renderView(); };
-                wrapper.appendChild(btn);
-            });
-
-            const evBtn = document.createElement('button');
-            evBtn.className = `tab-pill event-tab ${currentActiveTab === 'EVENTI' ? 'active' : ''}`;
-            evBtn.innerText = `🎉 Eventi & Festeggiamenti`;
-            evBtn.onclick = () => { currentActiveTab = 'EVENTI'; renderView(); };
-            wrapper.appendChild(evBtn);
-        }
-
-        function renderView() {
-            renderTabs();
-            const mainView = document.getElementById('main-view');
-            mainView.innerHTML = '';
-
-            if (currentActiveTab === 'EVENTI') {
-                renderEventsView(mainView);
-            } else {
-                renderTablesView(mainView);
-            }
-        }
-
-        function renderTablesView(container) {
-            const curDate = document.getElementById('current-date').value;
-            const curShift = document.getElementById('current-shift').value;
-            const bookings = getBookings();
-
-            const totalTables = ROOMS[currentActiveTab];
-            let occCount = 0;
-
-            let gridHtml = '';
-            for (let i = 1; i <= totalTables; i++) {
-                const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == i);
-                
-                if (b) {
-                    occCount++;
-                    gridHtml += `
-                        <div class="table-card occupied" onclick="handleTableClick(${i}, true)">
-                            <div class="t-occ-badge">OCC.</div>
-                            <div class="t-num">${i}</div>
-                            <div class="t-name">${b.name}</div>
-                        </div>
-                    `;
-                } else {
-                    gridHtml += `
-                        <div class="table-card free" onclick="handleTableClick(${i}, false)">
-                            <div class="t-num">${i}</div>
-                            <div class="t-status">LIBERO</div>
-                        </div>
-                    `;
-                }
-            }
-
-            const freeCount = totalTables - occCount;
-
-            container.innerHTML = `
-                <div class="sec-header">
-                    <div class="sec-title">${currentActiveTab}</div>
-                    <div class="counters">
-                        <span class="c-free">🟢 Liberi: ${freeCount}</span>
-                        <span class="c-occ">🔴 Occupati: ${occCount}</span>
-                    </div>
-                </div>
-                <div class="tables-grid">${gridHtml}</div>
-            `;
-        }
-
-        function renderEventsView(container) {
-            const events = getEvents();
-
-            let eventsListHtml = '';
-            if (events.length === 0) {
-                eventsListHtml = `<div class="empty-box">Nessun evento registrato.</div>`;
-            } else {
-                events.forEach(e => {
-                    eventsListHtml += `
-                        <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:10px; position:relative;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
-                                <span style="font-size:12px; font-weight:700; color:#f59e0b;">${e.priceTotal ? e.priceTotal + ' €' : ''}</span>
-                            </div>
-                            <div style="font-size:12px; color:#d4d4d8; margin-bottom:4px;">📍 ${e.room} — 👥 ${e.guests} Ospiti ${e.tables ? ' (Tavoli: ' + e.tables + ')' : ''}</div>
-                            ${e.decor ? `<div style="font-size:11px; color:#a1a1aa;">🎨 Addobbi/Colori: ${e.decor}</div>` : ''}
-                            ${e.notes ? `<div style="font-size:11px; color:#ef4444; font-weight:600; margin-top:2px;">⚠️ Note/Allergie: ${e.notes}</div>` : ''}
-                            
-                            <div style="display:flex; gap:6px; margin-top:10px; justify-content:flex-end;">
-                                <button style="background:#8b5cf622; color:#8b5cf6; border:1px solid #8b5cf6; border-radius:4px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;" onclick="editEvent('${e.id}')">✏️ Modifica Evento</button>
-                                <button style="background:#ef444422; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;" onclick="deleteEvent('${e.id}')">🗑️ Elimina</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            container.innerHTML = `
-                <div class="sec-header">
-                    <div class="sec-title">🎉 Gestione Eventi & Festeggiamenti</div>
-                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openNewEventModal()">+ Nuovo Evento</button>
-                </div>
-                <div>${eventsListHtml}</div>
-            `;
-        }
-
-        function handleTableClick(tableNum, isOccupied) {
-            if (isOccupied) {
-                if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
-                    if (checkMasterPass()) { // Richiesta Password Master "nikita78"
-                        const curDate = document.getElementById('current-date').value;
-                        const curShift = document.getElementById('current-shift').value;
-                        const b = getBookings().find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == tableNum);
-                        if (b && db) {
-                            db.ref('bookings/' + b.id).remove();
-                        }
-                    }
-                }
-            } else {
-                document.getElementById('booking-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${currentActiveTab}`;
-                document.getElementById('modal-table-num').value = tableNum;
-                document.getElementById('b-name').value = '';
-                document.getElementById('b-guests').value = '2';
-                document.getElementById('b-phone').value = '';
-                document.getElementById('b-notes').value = '';
-                openModal('booking-modal');
-            }
-        }
-
-        function saveBooking(e) {
-            e.preventDefault();
-            const selectedDate = document.getElementById('current-date').value;
-            const today = new Date().toISOString().split('T')[0];
-
-            if (selectedDate < today) {
-                alert("⚠️ Errore: Non puoi inserire una prenotazione retroattiva!");
-                return;
-            }
-
-            const tableNum = document.getElementById('modal-table-num').value;
-            const bookingId = 'b_' + Date.now();
-            const newBooking = {
-                id: bookingId,
-                date: selectedDate,
-                shift: document.getElementById('current-shift').value,
-                room: currentActiveTab,
-                table: tableNum,
-                name: document.getElementById('b-name').value,
-                guests: document.getElementById('b-guests').value,
-                phone: document.getElementById('b-phone').value,
-                notes: document.getElementById('b-notes').value
-            };
-
-            if (db) {
-                db.ref('bookings/' + bookingId).set(newBooking);
-            }
-            closeModal('booking-modal');
-        }
-
-        function calcEventTotal() {
-            const pp = parseFloat(document.getElementById('ev-price-pp').value) || 0;
-            const guests = parseFloat(document.getElementById('ev-guests').value) || 0;
-            if (pp > 0 && guests > 0) {
-                document.getElementById('ev-price-total').value = pp * guests;
-            }
-        }
-
-        // APERTURA MODALE PER NUOVO EVENTO
-        function openNewEventModal() {
-            document.getElementById('ev-id').value = '';
-            document.getElementById('event-modal-title').innerText = '🎉 Preventivo & Evento Frantoio';
-            document.getElementById('ev-name').value = '';
-            document.getElementById('ev-phone').value = '';
-            document.getElementById('ev-type').value = 'Compleanno';
-            document.getElementById('ev-room').value = Object.keys(ROOMS)[0];
-            document.getElementById('ev-guests').value = '30';
-            document.getElementById('ev-tables').value = '';
-            document.getElementById('ev-welcome').value = '';
-            document.getElementById('ev-starter').value = '';
-            document.getElementById('ev-first').value = '';
-            document.getElementById('ev-second').value = '';
-            document.getElementById('ev-dessert').value = '';
-            document.getElementById('ev-decor').value = '';
-            document.getElementById('ev-music').value = '';
-            document.getElementById('ev-notes').value = '';
-            document.getElementById('ev-price-pp').value = '';
-            document.getElementById('ev-price-total').value = '';
-            document.getElementById('ev-deposit').value = '0';
-            document.getElementById('ev-out-time').value = '';
-            openModal('event-modal');
-        }
-
-        // CARICAMENTO ED EDIT EVENTO ESISTENTE
-        function editEvent(eventId) {
-            const events = getEvents();
-            const ev = events.find(item => item.id === eventId);
-            if (!ev) return;
-
-            document.getElementById('ev-id').value = ev.id;
-            document.getElementById('event-modal-title').innerText = '✏️ Modifica Evento - ' + ev.name;
-            document.getElementById('ev-name').value = ev.name || '';
-            document.getElementById('ev-phone').value = ev.phone || '';
-            document.getElementById('ev-type').value = ev.type || 'Compleanno';
-            document.getElementById('ev-room').value = ev.room || Object.keys(ROOMS)[0];
-            document.getElementById('ev-guests').value = ev.guests || '';
-            document.getElementById('ev-tables').value = ev.tables || '';
-            document.getElementById('ev-welcome').value = ev.welcome || '';
-            document.getElementById('ev-starter').value = ev.starter || '';
-            document.getElementById('ev-first').value = ev.first || '';
-            document.getElementById('ev-second').value = ev.second || '';
-            document.getElementById('ev-dessert').value = ev.dessert || '';
-            document.getElementById('ev-decor').value = ev.decor || '';
-            document.getElementById('ev-music').value = ev.music || '';
-            document.getElementById('ev-notes').value = ev.notes || '';
-            document.getElementById('ev-price-pp').value = ev.pricePP || '';
-            document.getElementById('ev-price-total').value = ev.priceTotal || '';
-            document.getElementById('ev-deposit').value = ev.deposit || '0';
-            document.getElementById('ev-out-time').value = ev.outTime || '';
-
-            openModal('event-modal');
-        }
-
-        // SALVATAGGIO / AGGIORNAMENTO EVENTO
-        function saveEvent(e) {
-            e.preventDefault();
-            const existingId = document.getElementById('ev-id').value;
-            const eventId = existingId ? existingId : ('ev_' + Date.now());
-
-            const newEv = {
-                id: eventId,
-                name: document.getElementById('ev-name').value,
-                phone: document.getElementById('ev-phone').value,
-                type: document.getElementById('ev-type').value,
-                room: document.getElementById('ev-room').value,
-                guests: document.getElementById('ev-guests').value,
-                tables: document.getElementById('ev-tables').value,
-                welcome: document.getElementById('ev-welcome').value,
-                starter: document.getElementById('ev-starter').value,
-                first: document.getElementById('ev-first').value,
-                second: document.getElementById('ev-second').value,
-                dessert: document.getElementById('ev-dessert').value,
-                decor: document.getElementById('ev-decor').value,
-                music: document.getElementById('ev-music').value,
-                notes: document.getElementById('ev-notes').value,
-                pricePP: document.getElementById('ev-price-pp').value,
-                priceTotal: document.getElementById('ev-price-total').value,
-                deposit: document.getElementById('ev-deposit').value,
-                outTime: document.getElementById('ev-out-time').value
-            };
-
-            if (db) {
-                db.ref('events/' + eventId).set(newEv);
-            }
-            closeModal('event-modal');
-        }
-
-        function deleteEvent(eventId) {
-            if (confirm('Vuoi eliminare questo evento?')) {
-                if (checkMasterPass()) { // Richiesta Password Master "nikita78"
-                    if (db) {
-                        db.ref('events/' + eventId).remove();
-                    }
-                }
-            }
-        }
-
-        // ==========================================
-        // APERTURA & FILTRI PER STAMPA E STORICO
-        // ==========================================
-        function openPrintModal() {
-            if (checkMasterPass()) { // Protezione PIN "nikita78"
-                document.getElementById('pr-date-start').value = '';
-                document.getElementById('pr-date-end').value = '';
-                document.getElementById('pr-room').value = 'ALL';
-                document.getElementById('pr-event-type').value = 'ALL';
-                document.getElementById('pr-include').value = 'BOTH';
-                openModal('print-modal');
-            }
-        }
-
-        function executeFilteredPrint(e) {
-            e.preventDefault();
-
-            const dStart = document.getElementById('pr-date-start').value;
-            const dEnd = document.getElementById('pr-date-end').value;
-            const selRoom = document.getElementById('pr-room').value;
-            const selEventType = document.getElementById('pr-event-type').value;
-            const incType = document.getElementById('pr-include').value;
-
-            let bookings = getBookings();
-            let events = getEvents();
-
-            // Applicazione filtri prenotazioni
-            if (dStart) bookings = bookings.filter(b => b.date >= dStart);
-            if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
-            if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
-
-            // Ordinamento prenotazioni per data decrescente
-            bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-            // Applicazione filtri eventi
-            if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
-            if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
-
-            // Calcolo Totali
-            const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
-            const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.guests) || 0), 0);
-            const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
-
-            let periodText = "Tutto lo Storico";
-            if (dStart && dEnd) periodText = `Dal ${dStart} al ${dEnd}`;
-            else if (dStart) periodText = `Dal ${dStart}`;
-            else if (dEnd) periodText = `Fino al ${dEnd}`;
-
-            let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
-            let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
-
-            let printWin = window.open('', '_blank');
-            let html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Report & Storico Filtro - Vecchio Frantoio</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; }
-                        .filter-info { font-size: 11px; background: #f1f5f9; padding: 8px 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
-                        h2 { font-size: 15px; margin-top: 20px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
-                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
-                        .stat-item { font-size: 11px; font-weight: bold; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                        th, td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; font-size: 11px; }
-                        th { background: #f1f5f9; font-weight: bold; }
-                        .footer { font-size: 10px; color: #64748b; margin-top: 30px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-                        @media print {
-                            @page { margin: 1cm; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>🌿 Vecchio Frantoio - Report Personalizzato Storico</h1>
-                    
-                    <div class="filter-info">
-                        <b>📌 Filtri Applicati:</b><br>
-                        • Periodo: <b>${periodText}</b> (Include Date Retroattive)<br>
-                        • Sala: <b>${roomText}</b> | Tipologia Evento: <b>${eventTypeText}</b>
-                    </div>
-
-                    <div class="stats-box">
-                        ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
-                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
-                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
-                    </div>
-            `;
-
-            if (incType === 'BOTH' || incType === 'BOOKINGS') {
-                html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
-                if (bookings.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata con i filtri selezionati.</p>`;
-                } else {
-                    html += `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Servizio</th>
-                                    <th>Sala</th>
-                                    <th>Tav.</th>
-                                    <th>Cliente</th>
-                                    <th>Coperti</th>
-                                    <th>Telefono</th>
-                                    <th>Note</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    bookings.forEach(b => {
-                        html += `
-                            <tr>
-                                <td><b>${b.date || '-'}</b></td>
-                                <td>${b.shift || '-'}</td>
-                                <td>${b.room || '-'}</td>
-                                <td>${b.table || '-'}</td>
-                                <td><b>${b.name || '-'}</b></td>
-                                <td>${b.guests || '1'}</td>
-                                <td>${b.phone || '-'}</td>
-                                <td>${b.notes || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                    html += `</tbody></table>`;
-                }
-            }
-
-            if (incType === 'BOTH' || incType === 'EVENTS') {
-                html += `<h2>🎉 Storico Eventi & Festeggiamenti (${events.length})</h2>`;
-                if (events.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato con i filtri selezionati.</p>`;
-                } else {
-                    html += `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cliente / Festeggiato</th>
-                                    <th>Tipo Evento</th>
-                                    <th>Sala & Tavoli</th>
-                                    <th>Ospiti</th>
-                                    <th>Telefono</th>
-                                    <th>Acconto (€)</th>
-                                    <th>Totale Preventivo (€)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    events.forEach(ev => {
-                        html += `
-                            <tr>
-                                <td><b>${ev.name}</b></td>
-                                <td>${ev.type}</td>
-                                <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : ''}</td>
-                                <td>${ev.guests}</td>
-                                <td>${ev.phone || '-'}</td>
-                                <td>${ev.deposit ? ev.deposit + ' €' : '-'}</td>
-                                <td><b>${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
-                            </tr>
-                        `;
-                    });
-                    html += `</tbody></table>`;
-                }
-            }
-
-            html += `
-                    <div class="footer">
-                        Documento riservato e protetto generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
-                    </div>
-                    <script>
-                        window.onload = function() { window.print(); }
-                    <\/script>
-                </body>
-                </html>
-            `;
-
-            closeModal('print-modal');
-            printWin.document.write(html);
-            printWin.document.close();
-        }
-
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    </script>
-</body>
-</html>
+  `;
+}
