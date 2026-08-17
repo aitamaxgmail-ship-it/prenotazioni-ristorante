@@ -224,9 +224,11 @@
 
     <div class="modal" id="event-modal">
         <div class="modal-content" style="border-top-color: #8b5cf6;">
-            <div class="modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
+            <div class="modal-title" id="event-modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
             <form onsubmit="saveEvent(event)">
                 
+                <input type="hidden" id="ev-id">
+
                 <div class="sec-banner">Dati Cliente & Evento</div>
                 <div class="form-group">
                     <label>Nome Cliente / Festeggiato</label>
@@ -290,8 +292,8 @@
                 <div class="sec-banner">Dettagli & Extra</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Addobbi / Tovaglia</label>
-                        <input type="text" id="ev-decor" placeholder="Es. Tovaglia Bianca e Verde">
+                        <label>Addobbi / Colori / Tovaglia</label>
+                        <input type="text" id="ev-decor" placeholder="Es. Palloncini blu, Tovaglia Bianca e Verde">
                     </div>
                     <div class="form-group">
                         <label>Musica / SIAE</label>
@@ -299,8 +301,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Intolleranze / Allergie / Note</label>
-                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci, 1 vegetariano">
+                    <label>Intolleranze / Allergie / Variazioni Persone</label>
+                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci, 1 vegetariano, 3 bambini">
                 </div>
 
                 <div class="sec-banner">Preventivo Economico (€)</div>
@@ -325,7 +327,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-purple">Salva Preventivo / Evento nel Cloud</button>
+                <button type="submit" class="btn-purple">💾 Salva / Aggiorna Evento nel Cloud</button>
                 <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
             </form>
         </div>
@@ -585,11 +587,16 @@
                         <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:10px; position:relative;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                                 <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
-                                <span style="font-size:11px; font-weight:700; color:#f59e0b;">${e.priceTotal ? e.priceTotal + ' €' : ''}</span>
+                                <span style="font-size:12px; font-weight:700; color:#f59e0b;">${e.priceTotal ? e.priceTotal + ' €' : ''}</span>
                             </div>
-                            <div style="font-size:12px; color:#d4d4d8;">📅 ${e.room} - ${e.guests} Ospiti</div>
-                            ${e.tables ? `<div style="font-size:11px; color:#a1a1aa; margin-top:2px;">🪑 Tavoli: ${e.tables}</div>` : ''}
-                            <button style="position:absolute; right:10px; bottom:10px; background:#ef444422; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;" onclick="deleteEvent('${e.id}')">Elimina</button>
+                            <div style="font-size:12px; color:#d4d4d8; margin-bottom:4px;">📍 ${e.room} — 👥 ${e.guests} Ospiti ${e.tables ? ' (Tavoli: ' + e.tables + ')' : ''}</div>
+                            ${e.decor ? `<div style="font-size:11px; color:#a1a1aa;">🎨 Addobbi/Colori: ${e.decor}</div>` : ''}
+                            ${e.notes ? `<div style="font-size:11px; color:#ef4444; font-weight:600; margin-top:2px;">⚠️ Note/Allergie: ${e.notes}</div>` : ''}
+                            
+                            <div style="display:flex; gap:6px; margin-top:10px; justify-content:flex-end;">
+                                <button style="background:#8b5cf622; color:#8b5cf6; border:1px solid #8b5cf6; border-radius:4px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;" onclick="editEvent('${e.id}')">✏️ Modifica Evento</button>
+                                <button style="background:#ef444422; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;" onclick="deleteEvent('${e.id}')">🗑️ Elimina</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -598,7 +605,7 @@
             container.innerHTML = `
                 <div class="sec-header">
                     <div class="sec-title">🎉 Gestione Eventi & Festeggiamenti</div>
-                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openModal('event-modal')">+ Nuovo Evento</button>
+                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openNewEventModal()">+ Nuovo Evento</button>
                 </div>
                 <div>${eventsListHtml}</div>
             `;
@@ -665,9 +672,67 @@
             }
         }
 
+        // APERTURA MODALE PER NUOVO EVENTO
+        function openNewEventModal() {
+            document.getElementById('ev-id').value = '';
+            document.getElementById('event-modal-title').innerText = '🎉 Preventivo & Evento Frantoio';
+            document.getElementById('ev-name').value = '';
+            document.getElementById('ev-phone').value = '';
+            document.getElementById('ev-type').value = 'Compleanno';
+            document.getElementById('ev-room').value = Object.keys(ROOMS)[0];
+            document.getElementById('ev-guests').value = '30';
+            document.getElementById('ev-tables').value = '';
+            document.getElementById('ev-welcome').value = '';
+            document.getElementById('ev-starter').value = '';
+            document.getElementById('ev-first').value = '';
+            document.getElementById('ev-second').value = '';
+            document.getElementById('ev-dessert').value = '';
+            document.getElementById('ev-decor').value = '';
+            document.getElementById('ev-music').value = '';
+            document.getElementById('ev-notes').value = '';
+            document.getElementById('ev-price-pp').value = '';
+            document.getElementById('ev-price-total').value = '';
+            document.getElementById('ev-deposit').value = '0';
+            document.getElementById('ev-out-time').value = '';
+            openModal('event-modal');
+        }
+
+        // CARICAMENTO ED EDIT EVENTO ESISTENTE
+        function editEvent(eventId) {
+            const events = getEvents();
+            const ev = events.find(item => item.id === eventId);
+            if (!ev) return;
+
+            document.getElementById('ev-id').value = ev.id;
+            document.getElementById('event-modal-title').innerText = '✏️ Modifica Evento - ' + ev.name;
+            document.getElementById('ev-name').value = ev.name || '';
+            document.getElementById('ev-phone').value = ev.phone || '';
+            document.getElementById('ev-type').value = ev.type || 'Compleanno';
+            document.getElementById('ev-room').value = ev.room || Object.keys(ROOMS)[0];
+            document.getElementById('ev-guests').value = ev.guests || '';
+            document.getElementById('ev-tables').value = ev.tables || '';
+            document.getElementById('ev-welcome').value = ev.welcome || '';
+            document.getElementById('ev-starter').value = ev.starter || '';
+            document.getElementById('ev-first').value = ev.first || '';
+            document.getElementById('ev-second').value = ev.second || '';
+            document.getElementById('ev-dessert').value = ev.dessert || '';
+            document.getElementById('ev-decor').value = ev.decor || '';
+            document.getElementById('ev-music').value = ev.music || '';
+            document.getElementById('ev-notes').value = ev.notes || '';
+            document.getElementById('ev-price-pp').value = ev.pricePP || '';
+            document.getElementById('ev-price-total').value = ev.priceTotal || '';
+            document.getElementById('ev-deposit').value = ev.deposit || '0';
+            document.getElementById('ev-out-time').value = ev.outTime || '';
+
+            openModal('event-modal');
+        }
+
+        // SALVATAGGIO / AGGIORNAMENTO EVENTO
         function saveEvent(e) {
             e.preventDefault();
-            const eventId = 'ev_' + Date.now();
+            const existingId = document.getElementById('ev-id').value;
+            const eventId = existingId ? existingId : ('ev_' + Date.now());
+
             const newEv = {
                 id: eventId,
                 name: document.getElementById('ev-name').value,
