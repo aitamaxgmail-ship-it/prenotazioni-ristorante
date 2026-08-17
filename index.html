@@ -107,7 +107,7 @@
             <div class="logo">🌿 Vecchio Frantoio</div>
             <div class="header-btns">
                 <button class="btn-hdr" onclick="alert('Statistiche disponibili nello storico.')">📊 Statistiche</button>
-                <button class="btn-hdr" onclick="alert('Registro Generale attivo.')">📋 Registro</button>
+                <button class="btn-hdr" onclick="lockApp()">🔒 Blocca</button>
             </div>
         </header>
 
@@ -239,16 +239,22 @@
     </div>
 
     <script>
-        // CONTROLLO PASSWORD ACCESS
+        // CONTROLLO PASSWORD ACCESS (max78)
         function checkPassword(e) {
             e.preventDefault();
             const pass = document.getElementById('login-pass').value;
             if (pass === 'max78') {
-                sessionStorage.setItem('vf_auth', 'true');
                 document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-error').style.display = 'none';
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
+        }
+
+        // BLOCCA APPLICAZIONE
+        function lockApp() {
+            document.getElementById('login-overlay').style.display = 'flex';
         }
 
         // CONFIGURAZIONE SALE E CAPACITA'
@@ -263,11 +269,6 @@
         let currentActiveTab = "Sala Esterna";
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Verifica sessione password
-            if (sessionStorage.getItem('vf_auth') === 'true') {
-                document.getElementById('login-overlay').style.display = 'none';
-            }
-
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('current-date').value = today;
             setupRoomSelects();
