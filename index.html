@@ -2,613 +2,516 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vecchio Frantoio - Gestione Tavoli ed Eventi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vecchio Frantoio - Gestione Ristorante</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #121315; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #1e1e24; color: #f0f0f0; padding: 15px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #333; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        h1 { font-size: 22px; color: #ce93d8; }
+        .nav-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+        button, .btn { background: #333; color: #fff; border: 1px solid #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        button:hover { background: #444; }
+        .btn-primary { background: #7b1fa2; border-color: #9c27b0; }
+        .btn-primary:hover { background: #8e24aa; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
         
-        /* Modalità Schermata */
-        .screen { display: none; padding: 10px; width: 100%; max-width: 700px; margin: 0 auto; flex: 1; }
-        .screen.active { display: flex; flex-direction: column; }
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; background: #2a2b30; padding: 12px; border-radius: 8px; }
+        label { font-size: 13px; color: #aaa; }
+        input, select, textarea { background: #1e1e24; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; outline: none; }
+        input[type="date"], input[type="time"] { color-scheme: dark; }
 
-        /* Login Box */
-        .login-box { background: #1e1f23; border: 1px solid #333; border-radius: 12px; padding: 25px; text-align: center; margin: auto; width: 100%; }
-        .brand-logo { font-size: 32px; margin-bottom: 5px; color: #e5a93b; }
-        .brand-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #fff; }
-        .brand-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
-        
-        input, select, textarea {
-            width: 100%; padding: 10px 12px; margin-top: 6px; margin-bottom: 12px;
-            background: #2a2b30; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 14px; outline: none;
-        }
-        input:focus, select:focus, textarea:focus { border-color: #e5a93b; }
+        .room-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { background: #2a2b30; border: 1px solid #444; padding: 8px 16px; border-radius: 20px; color: #ccc; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: #7b1fa2; color: #fff; border-color: #ce93d8; }
 
-        .btn {
-            width: 100%; padding: 12px; background: #e5a93b; border: none; border-radius: 8px;
-            color: #121315; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s;
-        }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-cancel { background: #444; color: #fff; margin-top: 8px; }
-        .btn-danger { background: #d32f2f; color: #fff; }
-        .btn-event { background: #8e24aa; color: #fff; }
+        .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .table-card { background: #2a2b30; border: 2px solid #41444d; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .table-card:hover { border-color: #ce93d8; }
+        .table-card.occupied { border-color: #ef5350; background: #3a2226; }
+        .table-card.free { border-color: #66bb6a; background: #1e3323; }
+        .table-card .number { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+        .table-card .status { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table-card .details { font-size: 12px; margin-top: 6px; color: #ddd; }
 
-        /* Header App */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2b30; gap: 8px; flex-wrap: wrap; }
-        .header-title { font-size: 15px; font-weight: bold; color: #e5a93b; }
-        .header-btns { display: flex; gap: 6px; }
-        .btn-sm { width: auto; padding: 6px 10px; font-size: 11px; background: #2a2b30; color: #e5a93b; border: 1px solid #e5a93b; border-radius: 6px; cursor: pointer; }
-
-        /* Controls / Filtri */
-        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 10px 0; }
-        .controls label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-
-        /* Banner Avviso Data Passata */
-        .past-banner {
-            background: #3a2e12; border: 1px solid #e5a93b; color: #e5a93b;
-            padding: 6px 10px; border-radius: 6px; font-size: 11px; text-align: center;
-            margin-bottom: 10px; font-weight: bold; display: none;
-        }
-
-        /* Tabs Sale ed Eventi */
-        .tabs { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; margin-bottom: 10px; }
-        .tab-btn {
-            padding: 6px 12px; background: #2a2b30; border: 1px solid #444; border-radius: 16px;
-            color: #ccc; font-size: 12px; white-space: nowrap; cursor: pointer;
-        }
-        .tab-btn.active { background: #e5a93b; color: #121315; font-weight: bold; border-color: #e5a93b; }
-        .tab-btn.event-tab { border-color: #ab47bc; color: #ce93d8; }
-        .tab-btn.event-tab.active { background: #ab47bc; color: #fff; border-color: #ab47bc; }
-
-        /* Room Title & Counter */
-        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .room-name { font-size: 16px; font-weight: bold; }
-        .counters { font-size: 11px; font-weight: bold; }
-        .badge-free { color: #4caf50; margin-right: 8px; }
-        .badge-occ { color: #f44336; }
-
-        /* Table Grid - 5 TAVOLI PER RIGA SU SMARTPHONE */
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-        .table-card {
-            aspect-ratio: 1; border-radius: 8px; padding: 4px; display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center; text-align: center; cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3); position: relative; overflow: hidden;
-        }
-        .table-card.free { background: #1b3e20; border: 1px solid #2e7d32; color: #81c784; }
-        .table-card.free.disabled { background: #222; border-color: #444; color: #666; cursor: not-allowed; opacity: 0.6; }
-        .table-card.occupied { background: #4a1919; border: 1px solid #c62828; color: #ef9a9a; }
-        .table-number { font-size: 15px; font-weight: bold; margin-top: 2px; }
-        .table-status { font-size: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.2px; }
-        .table-client { font-size: 9px; word-break: break-word; color: #fff; font-weight: 600; line-height: 1.05; max-height: 20px; overflow: hidden; }
-
-        /* Modal Overlay */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+        /* Modal Styling */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
         .modal.active { display: flex; }
-        .modal-content { background: #1e1f23; border: 1px solid #333; border-radius: 12px; width: 100%; max-width: 550px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #e5a93b; text-align: center; }
+        .modal-content { background: #25262c; border: 1px solid #444; border-radius: 10px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 20px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .close-btn { position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 20px; color: #aaa; cursor: pointer; }
+        .close-btn:hover { color: #fff; }
+        .modal h2 { margin-bottom: 15px; font-size: 18px; color: #ce93d8; }
 
-        /* Forms & Detail Grid */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .section-tag { background: #2a2b30; color: #e5a93b; padding: 6px 10px; font-size: 12px; font-weight: bold; border-radius: 6px; margin: 12px 0 6px 0; border-left: 3px solid #e5a93b; }
 
-        .stat-card { background: #2a2b30; border: 1px solid #444; border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: center; }
-        .stat-val { font-size: 20px; font-weight: bold; color: #e5a93b; }
-        .stat-lbl { font-size: 10px; color: #aaa; text-transform: uppercase; }
+        .event-card { background: #1e1e24; border: 1px solid #444; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
 
-        .reg-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-        .reg-table th, .reg-table td { padding: 8px; text-align: left; border-bottom: 1px solid #333; }
-        .reg-table th { color: #e5a93b; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #333; }
+        th { background: #1e1e24; color: #ce93d8; }
+
+        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: #1e1e24; border: 1px solid #333; padding: 10px; border-radius: 6px; text-align: center; }
+        .stat-box .val { font-size: 20px; font-weight: bold; color: #ce93d8; }
+        .stat-box .lbl { font-size: 11px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div id="screen-login" class="screen active">
-        <div class="login-box">
-            <div class="brand-logo">🍴</div>
-            <div class="brand-title">Vecchio Frantoio</div>
-            <div class="brand-sub">Inserisci la password di accesso per gestire le sale</div>
-            <input type="password" id="pin-input" placeholder="Password di accesso">
-            <button class="btn" onclick="login()">Entra</button>
+    <header>
+        <h1>🏛️ Vecchio Frantoio</h1>
+        <div class="nav-btns">
+            <button onclick="openModal('modal-events')">🎉 Eventi & Preventivi</button>
+            <button onclick="openStatsModal()">📊 Statistiche</button>
+            <button onclick="openMasterModal()" style="border-color:#e53935; color:#ef5350;">🔑 Registro Master</button>
+        </div>
+    </header>
+
+    <div class="controls">
+        <div>
+            <label for="current-date">Data:</label><br>
+            <input type="date" id="current-date" onchange="renderTables()">
+        </div>
+        <div>
+            <label for="current-shift">Turno:</label><br>
+            <select id="current-shift" onchange="renderTables()">
+                <option value="Pranzo">Pranzo</option>
+                <option value="Cena">Cena</option>
+            </select>
+        </div>
+        <div style="margin-left: auto;">
+            <button class="btn-primary" onclick="openNewBookingModal()">+ Nuova Prenotazione</button>
         </div>
     </div>
 
-    <div id="screen-app" class="screen">
-        <div class="header">
-            <div class="header-title">🌿 Vecchio Frantoio</div>
-            <div class="header-btns">
-                <button class="btn-sm" onclick="openStatsModal()">📊 Statistiche</button>
-                <button class="btn-sm" onclick="openMasterModal()">📋 Registro</button>
-            </div>
-        </div>
+    <!-- TABS SALE -->
+    <div class="room-tabs" id="room-tabs"></div>
 
-        <div class="controls">
-            <div>
-                <label>Data</label>
-                <input type="date" id="filter-date" onchange="renderTables()">
-            </div>
-            <div>
-                <label>Orario</label>
-                <input type="time" id="filter-time" value="20:00" onchange="renderTables()">
-            </div>
-            <div>
-                <label>Servizio</label>
-                <select id="filter-service" onchange="renderTables()">
-                    <option value="Cena">Cena</option>
-                    <option value="Pranzo">Pranzo</option>
-                </select>
-            </div>
-        </div>
+    <!-- GRIGLIA TAVOLI -->
+    <div class="tables-grid" id="tables-grid"></div>
 
-        <div class="past-banner" id="past-banner">
-            ⚠️ Data antecedente ad oggi: consultazione storico (Prenotazioni disabilitate)
-        </div>
-
-        <div class="tabs" id="room-tabs">
-            </div>
-
-        <div id="view-room-container">
-            <div class="room-header">
-                <div class="room-name" id="current-room-name">Sala Esterna</div>
-                <div class="counters">
-                    <span class="badge-free">🟢 Liberi: <span id="count-free">0</span></span>
-                    <span class="badge-occ">🔴 Occupati: <span id="count-occ">0</span></span>
-                </div>
-            </div>
-            <div class="grid" id="tables-grid"></div>
-        </div>
-
-        <div id="view-events-container" style="display: none;">
-            <div class="room-header">
-                <div class="room-name">🎉 Gestione Eventi & Festa</div>
-                <button class="btn-sm btn-event" onclick="openNewEventModal()">+ Nuovo Evento</button>
-            </div>
-            <div id="events-list-box">
-                </div>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-book">
+    <!-- MODALE: Nuova Prenotazione -->
+    <div class="modal" id="modal-booking">
         <div class="modal-content">
-            <div class="modal-title" id="book-modal-title">Prenota Tavolo</div>
-            <label>Nome cliente</label>
-            <input type="text" id="book-name" placeholder="Es. Famiglia Rossi / Prova">
-            
-            <div class="form-row">
-                <div>
-                    <label>Coperti</label>
-                    <input type="number" id="book-guests" value="2" min="1">
+            <button class="close-btn" onclick="closeModal('modal-booking')">&times;</button>
+            <h2 id="booking-modal-title">Nuova Prenotazione</h2>
+            <form id="booking-form" onsubmit="saveBooking(event)">
+                <input type="hidden" id="booking-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="booking-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Turno</label>
+                        <select id="booking-shift" required>
+                            <option value="Pranzo">Pranzo</option>
+                            <option value="Cena">Cena</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label>Telefono</label>
-                    <input type="tel" id="book-phone" placeholder="Es. 3331234567">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sala</label>
+                        <select id="booking-room" onchange="updateTableOptions()" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tavolo</label>
+                        <select id="booking-table" required></select>
+                    </div>
                 </div>
-            </div>
-            
-            <label>Note (Allergie, intolleranze, richieste...)</label>
-            <textarea id="book-notes" rows="2" placeholder="Es. Celiaco, seggiolone..."></textarea>
-            
-            <button class="btn" onclick="saveBooking()">Conferma prenotazione</button>
-            <button class="btn btn-cancel" onclick="closeModal('modal-book')">Annulla</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Cliente</label>
+                        <input type="text" id="booking-name" placeholder="Es. Rossi Mario" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numero Persone</label>
+                        <input type="number" id="booking-guests" min="1" value="2" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="booking-phone" placeholder="333 1234567">
+                    </div>
+                    <div class="form-group">
+                        <label>Ora Arrivo</label>
+                        <input type="time" id="booking-time" value="13:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Note / Allergeni / Seggioloni</label>
+                    <textarea id="booking-notes" rows="2" placeholder="Note particolari..."></textarea>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                    <button type="button" onclick="closeModal('modal-booking')">Annulla</button>
+                    <button type="submit" class="btn-primary">Salva Prenotazione</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="modal" id="modal-detail">
+    <!-- MODALE: Eventi & Preventivi -->
+    <div class="modal" id="modal-events">
         <div class="modal-content">
-            <div class="modal-title" id="detail-modal-title">Dettaglio Tavolo</div>
-            <div id="detail-body"></div>
-            <button class="btn btn-danger" style="margin-top: 15px;" onclick="requestDeleteCurrentBooking()">Cancella Prenotazione</button>
-            <button class="btn btn-cancel" onclick="closeModal('modal-detail')">Chiudi</button>
+            <button class="close-btn" onclick="closeModal('modal-events')">&times;</button>
+            <h2>🎉 Eventi & Preventivi</h2>
+            
+            <button class="btn-primary" style="margin-bottom:15px; width:100%;" onclick="toggleEventForm()">+ Crea Nuovo Evento / Preventivo</button>
+            
+            <div id="event-form-container" style="display:none; background:#1e1e24; padding:15px; border-radius:8px; border:1px solid #444; margin-bottom:20px;">
+                <h3 style="font-size:15px; margin-bottom:10px; color:#ce93d8;">Nuovo Evento</h3>
+                <form id="event-form" onsubmit="saveEvent(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Referente / Evento</label>
+                            <input type="text" id="event-name" required placeholder="Es. Compleanno Marco">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo Evento</label>
+                            <input type="text" id="event-type" placeholder="Laurea, Matrimonio, ecc.">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="event-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ora Arrivo</label>
+                            <input type="time" id="event-time" value="20:00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sala</label>
+                            <select id="event-room" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tavoli Riservati</label>
+                            <input type="text" id="event-tables" placeholder="Es. Tavoli 1, 2, 3 o Intera Sala">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ospiti Previsti</label>
+                            <input type="number" id="event-guests" min="1" value="20">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefono</label>
+                            <input type="tel" id="event-phone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ora Uscita Prevista</label>
+                        <input type="time" id="event-exit" value="23:30">
+                    </div>
+                    <div style="border-top:1px dashed #444; margin:10px 0; padding-top:10px;">
+                        <label style="font-weight:bold; color:#ce93d8; margin-bottom:8px; display:block;">Dettagli Menu</label>
+                        <div class="form-group"><input type="text" id="event-benvenuto" placeholder="Aperitivo / Benvenuto"></div>
+                        <div class="form-group"><input type="text" id="event-antipasto" placeholder="Antipasti"></div>
+                        <div class="form-group"><input type="text" id="event-primo" placeholder="Primi"></div>
+                        <div class="form-group"><input type="text" id="event-secondo" placeholder="Secondi"></div>
+                        <div class="form-group"><input type="text" id="event-dolci" placeholder="Dolci / Torta"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Totale Preventivo (€)</label>
+                            <input type="number" id="event-total" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Acconto Versato (€)</label>
+                            <input type="number" id="event-deposit" min="0" value="0">
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" onclick="toggleEventForm()">Annulla</button>
+                        <button type="submit" class="btn-primary">Salva Evento</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="events-list-container"></div>
         </div>
     </div>
 
-    <div class="modal" id="modal-event">
-        <div class="modal-content">
-            <div class="modal-title">🎉 Preventivo & Evento Frantoio</div>
-            
-            <div class="section-tag">Dati Cliente & Evento</div>
-            <label>Nome Cliente / Festeggiato</label>
-            <input type="text" id="ev-name" placeholder="Es. Mario Rossi">
-            
-            <div class="form-row">
-                <div>
-                    <label>Telefono</label>
-                    <input type="tel" id="ev-phone" placeholder="3331234567">
-                </div>
-                <div>
-                    <label>Tipo Evento</label>
-                    <select id="ev-type">
-                        <option value="Compleanno">Compleanno</option>
-                        <option value="Matrimonio">Matrimonio</option>
-                        <option value="Battesimo">Battesimo</option>
-                        <option value="Comunione/Cresima">Comunione/Cresima</option>
-                        <option value="Festa Privata">Festa Privata</option>
-                        <option value="Altro">Altro</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label>Data Evento</label>
-                    <input type="date" id="ev-date">
-                </div>
-                <div>
-                    <label>Orario & Servizio</label>
-                    <input type="time" id="ev-time" value="20:00">
-                </div>
-            </div>
-
-            <div class="section-tag">Spazio & Sale Riservate</div>
-            <div class="form-row">
-                <div>
-                    <label>Sala Riservata</label>
-                    <select id="ev-room">
-                        <option value="Sala Esterna">Sala Esterna</option>
-                        <option value="Sala 1">Sala 1</option>
-                        <option value="Sala 2">Sala 2</option>
-                        <option value="Sala Vetrata">Sala Vetrata</option>
-                        <option value="Sala Privée">Sala Privée</option>
-                        <option value="Tutto l'Agriturismo">Tutto l'Agriturismo</option>
-                    </select>
-                </div>
-                <div>
-                    <label>N° Persone / Coperti</label>
-                    <input type="number" id="ev-guests" value="30" min="1">
-                </div>
-            </div>
-            <label>Tavoli Riservati (es. 1, 2, 3 o Tutti)</label>
-            <input type="text" id="ev-tables" placeholder="Es. Tavoli 1, 2, 3 e 4">
-
-            <div class="section-tag">Menu & Portate</div>
-            <label>Benvenuto</label>
-            <input type="text" id="ev-benvenuto" placeholder="Es. Prosecco e stuzzichini">
-            <label>Antipasto</label>
-            <input type="text" id="ev-antipasto" placeholder="Es. Tagliere Frantoio e frittelline">
-            <label>Primo / i</label>
-            <input type="text" id="ev-primo" placeholder="Es. Paccheri ai funghi e salsiccia">
-            <label>Secondo / i</label>
-            <input type="text" id="ev-secondo" placeholder="Es. Grigliata mista con patate">
-            <label>Frutta & Dolci / Torta</label>
-            <input type="text" id="ev-dolci" placeholder="Es. Torta Millefoglie e frutta di stagione">
-
-            <div class="section-tag">Dettagli & Extra</div>
-            <div class="form-row">
-                <div>
-                    <label>Addobbi / Tovaglia</label>
-                    <input type="text" id="ev-addobbi" placeholder="Es. Tovaglia Bianca e Verde">
-                </div>
-                <div>
-                    <label>Musica / SIAE</label>
-                    <input type="text" id="ev-music" placeholder="Es. Dj set / SIAE a carico">
-                </div>
-            </div>
-            <label>Intolleranze / Allergie / Note</label>
-            <textarea id="ev-notes" rows="2" placeholder="Es. 2 celiaci, 1 vegetariano"></textarea>
-
-            <div class="section-tag">Preventivo Economico (€)</div>
-            <div class="form-row">
-                <div>
-                    <label>Prezzo a Persona (€)</label>
-                    <input type="number" id="ev-price" placeholder="Es. 35" oninput="calcEventTotal()">
-                </div>
-                <div>
-                    <label>Totale Evento (€)</label>
-                    <input type="number" id="ev-total" placeholder="Totale">
-                </div>
-            </div>
-            <div class="form-row">
-                <div>
-                    <label>Acconto Versato (€)</label>
-                    <input type="number" id="ev-deposit" value="0">
-                </div>
-                <div>
-                    <label>Orario di Uscita</label>
-                    <input type="text" id="ev-exit" placeholder="Es. Ore 01:30">
-                </div>
-            </div>
-
-            <button class="btn btn-event" style="margin-top: 15px;" onclick="saveEvent()">Salva Preventivo / Evento</button>
-            <button class="btn btn-cancel" onclick="closeModal('modal-event')">Annulla</button>
-        </div>
-    </div>
-
+    <!-- MODALE: Statistiche -->
     <div class="modal" id="modal-stats">
         <div class="modal-content">
-            <div class="modal-title">📊 Statistiche & Storico Tavoli Venduti</div>
+            <button class="close-btn" onclick="closeModal('modal-stats')">&times;</button>
+            <h2>📊 Statistiche & Storico</h2>
             
-            <div class="form-row">
-                <div class="stat-card">
-                    <div class="stat-val" id="stat-total-bookings">0</div>
-                    <div class="stat-lbl">Prenotazioni Totali</div>
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <div class="val" id="stat-total-bookings">0</div>
+                    <div class="lbl">Prenotazioni Totali</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-val" id="stat-total-guests">0</div>
-                    <div class="stat-lbl">Coperti Venduti</div>
+                <div class="stat-box">
+                    <div class="val" id="stat-total-guests">0</div>
+                    <div class="lbl">Coperti Totali</div>
                 </div>
-            </div>
-
-            <div class="form-row">
-                <div class="stat-card">
-                    <div class="stat-val" id="stat-top-table">-</div>
-                    <div class="stat-lbl">Tavolo Più Venduto</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-val" id="stat-top-room">-</div>
-                    <div class="stat-lbl">Sala Più Richiesta</div>
+                <div class="stat-box">
+                    <div class="val" id="stat-avg-guests">0</div>
+                    <div class="lbl">Media Coperti / Tavolo</div>
                 </div>
             </div>
-
-            <div class="stat-card">
-                <div class="stat-val" id="stat-avg-guests">0</div>
-                <div class="stat-lbl">Media Coperti per Tavolo</div>
+            
+            <div style="background:#1e1e24; padding:10px; border-radius:6px; margin-bottom:15px; font-size:12px;">
+                <p><b>🏆 Tavolo più richiesto:</b> <span id="stat-top-table" style="color:#ce93d8;">-</span></p>
+                <p><b>🏛️ Sala più frequentata:</b> <span id="stat-top-room" style="color:#ce93d8;">-</span></p>
             </div>
 
-            <div class="section-tag">Classifica Tavoli Più Venduti</div>
-            <table class="reg-table">
+            <h3 style="font-size:14px; margin-top:15px; color:#ccc;">Dettaglio Tavoli Occupati</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>Tavolo</th>
                         <th>Sala</th>
-                        <th>N° Volte Venduto</th>
-                        <th>Tot. Coperti</th>
+                        <th>Frequenza</th>
+                        <th>Coperti Totali</th>
                     </tr>
                 </thead>
                 <tbody id="stat-tables-body"></tbody>
             </table>
-
-            <button class="btn btn-cancel" style="margin-top: 15px;" onclick="closeModal('modal-stats')">Chiudi</button>
         </div>
     </div>
 
+    <!-- MODALE: Registro Master -->
     <div class="modal" id="modal-master">
         <div class="modal-content">
-            <div class="modal-title">Registro Generale Prenotazioni</div>
-            <div id="master-login-box">
-                <p style="font-size: 13px; color: #aaa; margin-bottom: 12px; text-align: center;">Area protetta. Inserisci il codice master per accedere.</p>
-                <input type="password" id="master-pin-input" placeholder="Codice master">
-                <button class="btn" onclick="verifyMaster()">Sblocca Registro</button>
-                <button class="btn btn-cancel" onclick="closeModal('modal-master')">Chiudi</button>
+            <button class="close-btn" onclick="closeModal('modal-master')">&times;</button>
+            <h2>🔑 Registro Master</h2>
+
+            <div id="master-login-box" style="text-align:center; padding:20px 0;">
+                <p style="margin-bottom:15px; font-size:14px; color:#aaa;">Inserisci il Codice Master per accedere al registro:</p>
+                <input type="password" id="master-pin-input" placeholder="Codice Master" style="text-align:center; width:200px; font-size:16px; margin-bottom:15px;"><br>
+                <button class="btn-primary" onclick="verifyMaster()">Accedi</button>
             </div>
-            <div id="master-content-box" style="display: none;">
-                <div style="max-height: 300px; overflow-y: auto;">
-                    <table class="reg-table">
-                        <thead>
-                            <tr>
-                                <th>Tav.</th>
-                                <th>Sala</th>
-                                <th>Cliente</th>
-                                <th>Cop.</th>
-                                <th>Azione</th>
-                            </tr>
-                        </thead>
-                        <tbody id="register-list"></tbody>
-                    </table>
+
+            <div id="master-content-box" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                    <label>Filtra per Data: 
+                        <input type="date" id="filter-date" onchange="renderRegisterList()">
+                    </label>
+                    <button class="btn-sm" onclick="renderRegisterList()">🔄 Aggiorna</button>
                 </div>
-                <button class="btn btn-cancel" style="margin-top: 15px;" onclick="closeModal('modal-master')">Chiudi</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tav.</th>
+                            <th>Sala</th>
+                            <th>Cliente</th>
+                            <th>Pers.</th>
+                            <th>Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody id="register-list"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
+    <!-- LOGICA JAVASCRIPT -->
     <script>
-        // CONFIGURAZIONE SALE E TAVOLI
-        const ROOMS = [
-            { name: 'Sala Esterna', tables: 18 },
-            { name: 'Sala 1', tables: 15 },
-            { name: 'Sala 2', tables: 12 },
-            { name: 'Sala Vetrata', tables: 10 },
-            { name: 'Sala Privée', tables: 9 }
-        ];
+        // CONFIGURAZIONE PIN
+        const STAFF_PIN = 'max78';
+        const MASTER_PIN = 'nikita78';
 
-        // NUOVA PASSWORD DIPENDENTI E CODICE MASTER
-        const STAFF_PIN = "max78";
-        const MASTER_PIN = "9999";
+        // SALE E TAVOLI
+        const ROOMS_CONFIG = {
+            "Sala Interna": [1, 2, 3, 4, 5, 6, 7, 8],
+            "Veranda": [9, 10, 11, 12, 13, 14],
+            "Dehor Esterno": [15, 16, 17, 18, 19, 20],
+            "Privé": [21, 22]
+        };
 
-        let currentRoomIndex = 0;
-        let selectedTableId = null;
-        let selectedBookingId = null;
+        let currentActiveRoom = Object.keys(ROOMS_CONFIG)[0];
 
-        function getTodayString() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('current-date').value = today;
+            document.getElementById('booking-date').value = today;
+            document.getElementById('filter-date').value = today;
+            document.getElementById('event-date').value = today;
+
+            setupRoomTabs();
+            populateRoomDropdowns();
+            renderTables();
+        });
+
+        // STORAGE HELPERS
+        function getBookings() { return JSON.parse(localStorage.getItem('vf_bookings') || '[]'); }
+        function saveBookings(b) { localStorage.setItem('vf_bookings', JSON.stringify(b)); }
+        function getEvents() { return JSON.parse(localStorage.getItem('vf_events') || '[]'); }
+        function saveEvents(e) { localStorage.setItem('vf_events', JSON.stringify(e)); }
+
+        // TABS & DROPDOWNS
+        function setupRoomTabs() {
+            const container = document.getElementById('room-tabs');
+            container.innerHTML = '';
+            Object.keys(ROOMS_CONFIG).forEach(room => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${room === currentActiveRoom ? 'active' : ''}`;
+                btn.innerText = room;
+                btn.onclick = () => {
+                    currentActiveRoom = room;
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTables();
+                };
+                container.appendChild(btn);
+            });
         }
 
-        const todayStr = getTodayString();
-        const datePicker = document.getElementById('filter-date');
-        datePicker.value = todayStr;
-        datePicker.min = todayStr;
+        function populateRoomDropdowns() {
+            const bookingSelect = document.getElementById('booking-room');
+            const eventSelect = document.getElementById('event-room');
+            bookingSelect.innerHTML = '';
+            eventSelect.innerHTML = '';
 
-        function getBookings() {
-            return JSON.parse(localStorage.getItem('vf_bookings') || '[]');
+            Object.keys(ROOMS_CONFIG).forEach(room => {
+                bookingSelect.innerHTML += `<option value="${room}">${room}</option>`;
+                eventSelect.innerHTML += `<option value="${room}">${room}</option>`;
+            });
+
+            updateTableOptions();
         }
 
-        function saveBookings(bookings) {
-            localStorage.setItem('vf_bookings', JSON.stringify(bookings));
-        }
-
-        function getEvents() {
-            return JSON.parse(localStorage.getItem('vf_events') || '[]');
-        }
-
-        function saveEvents(events) {
-            localStorage.setItem('vf_events', JSON.stringify(events));
-        }
-
-        // LOGIN
-        function login() {
-            const pin = document.getElementById('pin-input').value;
-            if (pin === STAFF_PIN || pin === MASTER_PIN) {
-                document.getElementById('screen-login').classList.remove('active');
-                document.getElementById('screen-app').classList.add('active');
-                initTabs();
-                renderTables();
-            } else {
-                alert('Password di accesso errata!');
+        function updateTableOptions() {
+            const room = document.getElementById('booking-room').value;
+            const tableSelect = document.getElementById('booking-table');
+            tableSelect.innerHTML = '';
+            
+            if (ROOMS_CONFIG[room]) {
+                ROOMS_CONFIG[room].forEach(t => {
+                    tableSelect.innerHTML += `<option value="${t}">Tavolo ${t}</option>`;
+                });
             }
         }
 
-        // TABS SALE + EVENTI
-        function initTabs() {
-            const tabsContainer = document.getElementById('room-tabs');
-            tabsContainer.innerHTML = '';
-            
-            ROOMS.forEach((room, idx) => {
-                const btn = document.createElement('button');
-                btn.className = `tab-btn ${idx === currentRoomIndex ? 'active' : ''}`;
-                btn.innerText = `${room.name} (${room.tables})`;
-                btn.onclick = () => {
-                    currentRoomIndex = idx;
-                    document.getElementById('view-room-container').style.display = 'block';
-                    document.getElementById('view-events-container').style.display = 'none';
-                    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-                    renderTables();
-                };
-                tabsContainer.appendChild(btn);
-            });
+        // RENDERING TAVOLI
+        function renderTables() {
+            const container = document.getElementById('tables-grid');
+            container.innerHTML = '';
 
-            // TAB EVENTI
-            const evBtn = document.createElement('button');
-            evBtn.className = `tab-btn event-tab ${currentRoomIndex === 5 ? 'active' : ''}`;
-            evBtn.innerText = `🎉 Eventi & Festeggiamenti`;
-            evBtn.onclick = () => {
-                currentRoomIndex = 5;
-                document.getElementById('view-room-container').style.display = 'none';
-                document.getElementById('view-events-container').style.display = 'block';
-                document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === 5));
-                renderEventsList();
-            };
-            tabsContainer.appendChild(evBtn);
+            const currentDate = document.getElementById('current-date').value;
+            const currentShift = document.getElementById('current-shift').value;
+            const bookings = getBookings();
+            const tables = ROOMS_CONFIG[currentActiveRoom] || [];
+
+            tables.forEach(tableNum => {
+                const booking = bookings.find(b => b.date === currentDate && b.shift === currentShift && b.room === currentActiveRoom && String(b.table) === String(tableNum));
+
+                const card = document.createElement('div');
+                card.className = `table-card ${booking ? 'occupied' : 'free'}`;
+                
+                if (booking) {
+                    card.innerHTML = `
+                        <div class="number">Tavolo ${tableNum}</div>
+                        <div class="status" style="color:#ef5350;">Occupato</div>
+                        <div class="details">
+                            <b>${booking.name}</b><br>
+                            👥 ${booking.guests} pers. (${booking.time})<br>
+                            ${booking.phone ? '📞 ' + booking.phone + '<br>' : ''}
+                            ${booking.notes ? '<small>📝 ' + booking.notes + '</small>' : ''}
+                        </div>
+                        <div style="margin-top:8px;">
+                            <button class="btn-sm" style="border-color:#ef5350; color:#ef5350;" onclick="event.stopPropagation(); requestDeleteBooking(${booking.id})">Libera</button>
+                        </div>
+                    `;
+                    card.onclick = () => editBooking(booking);
+                } else {
+                    card.innerHTML = `
+                        <div class="number">Tavolo ${tableNum}</div>
+                        <div class="status" style="color:#66bb6a;">Libero</div>
+                        <div class="details" style="color:#888; margin-top:10px;">Clicca per prenotare</div>
+                    `;
+                    card.onclick = () => openNewBookingModal(currentActiveRoom, tableNum);
+                }
+
+                container.appendChild(card);
+            });
         }
 
-        // RENDER TAVOLI
-        function renderTables() {
-            if (currentRoomIndex === 5) {
-                renderEventsList();
+        // SALVA / EDITA PRENOTAZIONI
+        function openNewBookingModal(room = null, table = null) {
+            document.getElementById('booking-form').reset();
+            document.getElementById('booking-id').value = '';
+            document.getElementById('booking-modal-title').innerText = 'Nuova Prenotazione';
+
+            const curDate = document.getElementById('current-date').value;
+            const curShift = document.getElementById('current-shift').value;
+
+            document.getElementById('booking-date').value = curDate;
+            document.getElementById('booking-shift').value = curShift;
+
+            if (room) document.getElementById('booking-room').value = room;
+            updateTableOptions();
+            if (table) document.getElementById('booking-table').value = table;
+
+            openModal('modal-booking');
+        }
+
+        function editBooking(booking) {
+            document.getElementById('booking-id').value = booking.id;
+            document.getElementById('booking-modal-title').innerText = 'Modifica Prenotazione';
+            document.getElementById('booking-date').value = booking.date;
+            document.getElementById('booking-shift').value = booking.shift;
+            document.getElementById('booking-room').value = booking.room;
+            updateTableOptions();
+            document.getElementById('booking-table').value = booking.table;
+            document.getElementById('booking-name').value = booking.name;
+            document.getElementById('booking-guests').value = booking.guests;
+            document.getElementById('booking-phone').value = booking.phone || '';
+            document.getElementById('booking-time').value = booking.time || '13:00';
+            document.getElementById('booking-notes').value = booking.notes || '';
+
+            openModal('modal-booking');
+        }
+
+        function saveBooking(e) {
+            e.preventDefault();
+            let bookings = getBookings();
+
+            const id = document.getElementById('booking-id').value;
+            const newBooking = {
+                id: id ? parseInt(id) : Date.now(),
+                date: document.getElementById('booking-date').value,
+                shift: document.getElementById('booking-shift').value,
+                room: document.getElementById('booking-room').value,
+                table: document.getElementById('booking-table').value,
+                name: document.getElementById('booking-name').value,
+                guests: parseInt(document.getElementById('booking-guests').value) || 1,
+                phone: document.getElementById('booking-phone').value,
+                time: document.getElementById('booking-time').value,
+                notes: document.getElementById('booking-notes').value
+            };
+
+            const conflict = bookings.find(b => b.id !== newBooking.id && b.date === newBooking.date && b.shift === newBooking.shift && b.room === newBooking.room && String(b.table) === String(newBooking.table));
+
+            if (conflict) {
+                alert(`Attenzione! Il tavolo ${newBooking.table} in ${newBooking.room} è già prenotato da ${conflict.name}.`);
                 return;
             }
 
-            const room = ROOMS[currentRoomIndex];
-            document.getElementById('current-room-name').innerText = room.name;
-
-            const selectedDate = document.getElementById('filter-date').value;
-            const service = document.getElementById('filter-service').value;
-            const today = getTodayString();
-            const isPast = selectedDate < today;
-
-            document.getElementById('past-banner').style.display = isPast ? 'block' : 'none';
-
-            const bookings = getBookings();
-            const grid = document.getElementById('tables-grid');
-            grid.innerHTML = '';
-
-            let freeCount = 0;
-            let occCount = 0;
-
-            for (let i = 1; i <= room.tables; i++) {
-                const booking = bookings.find(b => 
-                    b.room === room.name && 
-                    b.table === i && 
-                    b.date === selectedDate && 
-                    b.service === service
-                );
-
-                const card = document.createElement('div');
-                
-                if (booking) {
-                    occCount++;
-                    card.className = 'table-card occupied';
-                    card.innerHTML = `
-                        <div class="table-number">${i}</div>
-                        <div class="table-status">OCC.</div>
-                        <div class="table-client">${booking.name}</div>
-                    `;
-                    card.onclick = () => openDetailModal(booking);
-                } else {
-                    freeCount++;
-                    if (isPast) {
-                        card.className = 'table-card free disabled';
-                        card.innerHTML = `
-                            <div class="table-number">${i}</div>
-                            <div class="table-status">OFF</div>
-                            <div></div>
-                        `;
-                        card.onclick = () => alert('Non è possibile inserire prenotazioni per date passate.');
-                    } else {
-                        card.className = 'table-card free';
-                        card.innerHTML = `
-                            <div class="table-number">${i}</div>
-                            <div class="table-status">LIBERO</div>
-                            <div></div>
-                        `;
-                        card.onclick = () => openBookModal(i);
-                    }
-                }
-                grid.appendChild(card);
+            if (id) {
+                bookings = bookings.map(b => b.id === parseInt(id) ? newBooking : b);
+            } else {
+                bookings.push(newBooking);
             }
 
-            document.getElementById('count-free').innerText = freeCount;
-            document.getElementById('count-occ').innerText = occCount;
-        }
-
-        // PRENOTAZIONE STANDARD
-        function openBookModal(tableNum) {
-            selectedTableId = tableNum;
-            const roomName = ROOMS[currentRoomIndex].name;
-            document.getElementById('book-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${roomName}`;
-            document.getElementById('book-name').value = '';
-            document.getElementById('book-guests').value = '2';
-            document.getElementById('book-phone').value = '';
-            document.getElementById('book-notes').value = '';
-            document.getElementById('modal-book').classList.add('active');
-        }
-
-        function saveBooking() {
-            const name = document.getElementById('book-name').value.trim();
-            if (!name) { alert('Inserisci il nome del cliente!'); return; }
-
-            const newBooking = {
-                id: Date.now(),
-                room: ROOMS[currentRoomIndex].name,
-                table: selectedTableId,
-                date: document.getElementById('filter-date').value,
-                time: document.getElementById('filter-time').value,
-                service: document.getElementById('filter-service').value,
-                name: name,
-                guests: parseInt(document.getElementById('book-guests').value) || 1,
-                phone: document.getElementById('book-phone').value || 'N/D',
-                notes: document.getElementById('book-notes').value || 'Nessuna'
-            };
-
-            const bookings = getBookings();
-            bookings.push(newBooking);
             saveBookings(bookings);
-
-            closeModal('modal-book');
+            closeModal('modal-booking');
             renderTables();
         }
 
-        function openDetailModal(booking) {
-            selectedBookingId = booking.id;
-            document.getElementById('detail-modal-title').innerText = `Tavolo ${booking.table} - ${booking.room}`;
-            document.getElementById('detail-body').innerHTML = `
-                <p><b>Cliente:</b> ${booking.name}</p>
-                <p><b>Coperti:</b> ${booking.guests} Persone</p>
-                <p><b>Data e Orario:</b> ${booking.date} - ${booking.time} (${booking.service})</p>
-                <p><b>Telefono:</b> ${booking.phone}</p>
-                <p><b>Note:</b> ${booking.notes}</p>
-            `;
-            document.getElementById('modal-detail').classList.add('active');
-        }
-
-        function requestDeleteCurrentBooking() {
-            const pin = prompt('Inserisci il codice Master per cancellare (Default: 9999):');
-            if (pin === MASTER_PIN) {
-                deleteBooking(selectedBookingId);
-                closeModal('modal-detail');
-            } else if (pin !== null) {
-                alert('Codice Master errato!');
+        function requestDeleteBooking(id) {
+            if (confirm('Sei sicuro di voler cancellare questa prenotazione?')) {
+                deleteBooking(id);
             }
         }
 
@@ -617,88 +520,99 @@
             bookings = bookings.filter(b => b.id !== id);
             saveBookings(bookings);
             renderTables();
+            renderRegisterList();
         }
 
-        // EVENTI
-        function openNewEventModal() {
-            document.getElementById('ev-date').value = getTodayString();
-            document.getElementById('modal-event').classList.add('active');
+        // GESTIONE EVENTI
+        function toggleEventForm() {
+            const formContainer = document.getElementById('event-form-container');
+            formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
         }
 
-        function calcEventTotal() {
-            const p = parseFloat(document.getElementById('ev-price').value) || 0;
-            const g = parseInt(document.getElementById('ev-guests').value) || 0;
-            document.getElementById('ev-total').value = p * g;
-        }
+        function saveEvent(e) {
+            e.preventDefault();
+            let events = getEvents();
 
-        function saveEvent() {
-            const name = document.getElementById('ev-name').value.trim();
-            if (!name) { alert('Inserisci il nome del cliente per l\'evento!'); return; }
-
-            const ev = {
+            const newEvent = {
                 id: Date.now(),
-                name: name,
-                phone: document.getElementById('ev-phone').value,
-                type: document.getElementById('ev-type').value,
-                date: document.getElementById('ev-date').value,
-                time: document.getElementById('ev-time').value,
-                room: document.getElementById('ev-room').value,
-                guests: document.getElementById('ev-guests').value,
-                tables: document.getElementById('ev-tables').value,
-                benvenuto: document.getElementById('ev-benvenuto').value,
-                antipasto: document.getElementById('ev-antipasto').value,
-                primo: document.getElementById('ev-primo').value,
-                secondo: document.getElementById('ev-secondo').value,
-                dolci: document.getElementById('ev-dolci').value,
-                addobbi: document.getElementById('ev-addobbi').value,
-                music: document.getElementById('ev-music').value,
-                notes: document.getElementById('ev-notes').value,
-                price: document.getElementById('ev-price').value,
-                total: document.getElementById('ev-total').value,
-                deposit: document.getElementById('ev-deposit').value,
-                exit: document.getElementById('ev-exit').value
+                name: document.getElementById('event-name').value,
+                type: document.getElementById('event-type').value || 'Evento',
+                date: document.getElementById('event-date').value,
+                time: document.getElementById('event-time').value,
+                room: document.getElementById('event-room').value,
+                tables: document.getElementById('event-tables').value,
+                guests: parseInt(document.getElementById('event-guests').value) || 0,
+                phone: document.getElementById('event-phone').value,
+                exit: document.getElementById('event-exit').value,
+                benvenuto: document.getElementById('event-benvenuto').value,
+                antipasto: document.getElementById('event-antipasto').value,
+                primo: document.getElementById('event-primo').value,
+                secondo: document.getElementById('event-secondo').value,
+                dolci: document.getElementById('event-dolci').value,
+                total: parseFloat(document.getElementById('event-total').value) || 0,
+                deposit: parseFloat(document.getElementById('event-deposit').value) || 0
             };
 
-            const events = getEvents();
-            events.push(ev);
+            events.push(newEvent);
             saveEvents(events);
-
-            closeModal('modal-event');
+            document.getElementById('event-form').reset();
+            toggleEventForm();
             renderEventsList();
         }
 
         function renderEventsList() {
             const events = getEvents();
-            const container = document.getElementById('events-list-box');
+            const container = document.getElementById('events-list-container');
             container.innerHTML = '';
 
             if (events.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:20px;">Nessun evento registrato.</p>';
+                container.innerHTML = '<p style="text-align:center; color:#aaa; font-size:13px;">Nessun evento o preventivo programmato.</p>';
                 return;
             }
 
+            events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
             events.forEach(e => {
                 const card = document.createElement('div');
-                card.style.cssText = 'background:#1e1f23; border:1px solid #ab47bc; border-radius:10px; padding:12px; margin-bottom:10px;';
+                card.className = 'event-card';
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:6px;">
                         <span style="font-size:15px; font-weight:bold; color:#ce93d8;">🎉 ${e.name} (${e.type})</span>
                         <span style="font-size:11px; color:#aaa;">📅 ${e.date} - ${e.time}</span>
                     </div>
-                    <div style="margin-top:6px; font-size:12px; color:#ddd;">
-                        <p><b>Sala & Tavoli:</b> ${e.room} (${e.tables || 'Tutti'}) | <b>Persone:</b> ${e.guests}</p>
-                        <p><b>Menu:</b> ${e.primo || 'N/D'}, ${e.secondo || 'N/D'}</p>
-                        <p><b>Preventivo:</b> €${e.total || 0} (Acconto: €${e.deposit || 0})</p>
+                    <div style="margin-top:8px; font-size:12px; color:#ddd;">
+                        <p><b>Sala & Tavoli:</b> ${e.room} (${e.tables || 'Tutti'}) | <b>Ospiti:</b> ${e.guests} pers.</p>
+                        <p><b>Telefono:</b> ${e.phone || 'N/D'} | <b>Uscita prevista:</b> ${e.exit || 'N/D'}</p>
+                        ${(e.benvenuto || e.antipasto || e.primo || e.secondo || e.dolci) ? `
+                            <div style="background:#2a2b30; padding:6px 10px; border-radius:6px; margin-top:6px; font-size:11px;">
+                                <b>Menu:</b> ${[e.benvenuto, e.antipasto, e.primo, e.secondo, e.dolci].filter(Boolean).join(' | ')}
+                            </div>
+                        ` : ''}
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px solid #333; padding-top:6px;">
+                            <span>Totale: <b>€${e.total || 0}</b> ${e.deposit > 0 ? `<span style="color:#81c784;">(Acconto: €${e.deposit})</span>` : ''}</span>
+                            <button class="btn-sm" style="border-color:#d32f2f; color:#ef5350;" onclick="requestDeleteEvent(${e.id})">Elimina</button>
+                        </div>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        // STATISTICHE & STORICO ANALITICO
+        function requestDeleteEvent(id) {
+            const pin = prompt('Inserisci il codice Master per eliminare l\'evento:');
+            if (pin === MASTER_PIN) {
+                let events = getEvents();
+                events = events.filter(e => e.id !== id);
+                saveEvents(events);
+                renderEventsList();
+            } else if (pin !== null) {
+                alert('Codice Master errato!');
+            }
+        }
+
+        // STATISTICHE
         function openStatsModal() {
             const bookings = getBookings();
-            
             let totalBookings = bookings.length;
             let totalGuests = 0;
             let tableCounts = {};
@@ -762,7 +676,7 @@
                 });
             }
 
-            document.getElementById('modal-stats').classList.add('active');
+            openModal('modal-stats');
         }
 
         // REGISTRO MASTER
@@ -770,7 +684,7 @@
             document.getElementById('master-login-box').style.display = 'block';
             document.getElementById('master-content-box').style.display = 'none';
             document.getElementById('master-pin-input').value = '';
-            document.getElementById('modal-master').classList.add('active');
+            openModal('modal-master');
         }
 
         function verifyMaster() {
@@ -787,27 +701,41 @@
         function renderRegisterList() {
             const bookings = getBookings();
             const date = document.getElementById('filter-date').value;
-            const filtered = bookings.filter(b => b.date === date);
+            const filtered = bookings.filter(b => !date || b.date === date);
             
             const list = document.getElementById('register-list');
             list.innerHTML = '';
 
             if (filtered.length === 0) {
-                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Nessuna prenotazione per questa data.</td></tr>';
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Nessuna prenotazione trovata per questa data.</td></tr>';
                 return;
             }
+
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             filtered.forEach(b => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><b>${b.table}</b></td>
                     <td>${b.room}</td>
-                    <td>${b.name}</td>
+                    <td>${b.name}<br><small style="color:#aaa;">${b.time || ''}</small></td>
                     <td>${b.guests}</td>
-                    <td><button style="background:none; border:none; color:#f44336; cursor:pointer;" onclick="deleteBooking(${b.id})">🗑️</button></td>
+                    <td><button style="background:none; border:none; color:#f44336; cursor:pointer;" onclick="deleteBookingFromMaster(${b.id})">🗑️</button></td>
                 `;
                 list.appendChild(tr);
             });
+        }
+
+        function deleteBookingFromMaster(id) {
+            if (confirm('Sei sicuro di voler eliminare questa prenotazione dal registro?')) {
+                deleteBooking(id);
+            }
+        }
+
+        // UTILITY MODALI
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if (id === 'modal-events') renderEventsList();
         }
 
         function closeModal(id) {
