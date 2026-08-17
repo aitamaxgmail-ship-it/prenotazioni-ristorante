@@ -6,8 +6,15 @@
     <title>Vecchio Frantoio - Gestione Prenotazioni</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 25px; }
+        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 25px; display: flex; justify-content: center; }
         
+        /* APP CONTAINER PER BLOCCARE LA LARGHEZZA SU PC */
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; }
+
+        /* SCHERMATA LOGIN PASSWORD */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #121214; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: #1c1c20; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+
         /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .logo { font-size: 18px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
@@ -49,7 +56,7 @@
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
-        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; }
+        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .modal-title { font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; text-align: center; }
@@ -71,35 +78,51 @@
 </head>
 <body>
 
-    <header>
-        <div class="logo">🌿 Vecchio Frantoio</div>
-        <div class="header-btns">
-            <button class="btn-hdr" onclick="alert('Statistiche disponibili nello storico.')">📊 Statistiche</button>
-            <button class="btn-hdr" onclick="alert('Registro Generale attivo.')">📋 Registro</button>
-        </div>
-    </header>
-
-    <div class="controls-card">
-        <div class="ctrl-group">
-            <label>Data</label>
-            <input type="date" id="current-date" onchange="renderView()">
-        </div>
-        <div class="ctrl-group">
-            <label>Orario</label>
-            <input type="time" id="current-time" value="20:00" onchange="renderView()">
-        </div>
-        <div class="ctrl-group">
-            <label>Servizio</label>
-            <select id="current-shift" onchange="renderView()">
-                <option value="Cena">Cena</option>
-                <option value="Pranzo">Pranzo</option>
-            </select>
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px;">🌿 Vecchio Frantoio</h2>
+            <p style="font-size:12px; color:#a1a1aa; margin-bottom:15px;">Inserisci la password di accesso:</p>
+            <form onsubmit="checkPassword(event)">
+                <input type="password" id="login-pass" placeholder="Password" style="width:100%; background:#27272a; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:8px; font-size:14px; outline:none; text-align:center; margin-bottom:12px;" required>
+                <button type="submit" class="btn-gold">Accedi</button>
+            </form>
+            <div id="login-error" style="color:#ef4444; font-size:11px; margin-top:10px; display:none; font-weight:600;">Password errata!</div>
         </div>
     </div>
 
-    <div class="tabs-wrapper" id="tabs-wrapper"></div>
+    <div class="app-container">
 
-    <div id="main-view"></div>
+        <header>
+            <div class="logo">🌿 Vecchio Frantoio</div>
+            <div class="header-btns">
+                <button class="btn-hdr" onclick="alert('Statistiche disponibili nello storico.')">📊 Statistiche</button>
+                <button class="btn-hdr" onclick="alert('Registro Generale attivo.')">📋 Registro</button>
+            </div>
+        </header>
+
+        <div class="controls-card">
+            <div class="ctrl-group">
+                <label>Data</label>
+                <input type="date" id="current-date" onchange="renderView()">
+            </div>
+            <div class="ctrl-group">
+                <label>Orario</label>
+                <input type="time" id="current-time" value="20:00" onchange="renderView()">
+            </div>
+            <div class="ctrl-group">
+                <label>Servizio</label>
+                <select id="current-shift" onchange="renderView()">
+                    <option value="Cena">Cena</option>
+                    <option value="Pranzo">Pranzo</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabs-wrapper" id="tabs-wrapper"></div>
+
+        <div id="main-view"></div>
+
+    </div>
 
     <div class="modal" id="booking-modal">
         <div class="modal-content">
@@ -205,6 +228,18 @@
     </div>
 
     <script>
+        // CONTROLLO PASSWORD ACCESS
+        function checkPassword(e) {
+            e.preventDefault();
+            const pass = document.getElementById('login-pass').value;
+            if (pass === 'max78') {
+                sessionStorage.setItem('vf_auth', 'true');
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
         // CONFIGURAZIONE SALE E CAPACITA'
         const ROOMS = {
             "Sala Esterna": 18,
@@ -217,6 +252,11 @@
         let currentActiveTab = "Sala Esterna";
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Verifica sessione password
+            if (sessionStorage.getItem('vf_auth') === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+            }
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('current-date').value = today;
             setupRoomSelects();
