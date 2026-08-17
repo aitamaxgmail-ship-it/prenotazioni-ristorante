@@ -26,9 +26,20 @@
         .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
         .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 5px 6px; font-size: 12px; outline: none; }
 
-        /* ROOM TABS HORIZONTAL SCROLL */
-        .tabs-wrapper { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; scrollbar-width: none; }
-        .tabs-wrapper::-webkit-scrollbar { display: none; }
+        /* ROOM TABS HORIZONTAL SCROLL (OTTIMIZZATO PER PC E MOBILE) */
+        .tabs-wrapper { 
+            display: flex; 
+            gap: 6px; 
+            overflow-x: auto; 
+            padding-bottom: 6px; 
+            margin-bottom: 12px; 
+            scrollbar-width: thin; 
+            scrollbar-color: #3f3f46 transparent;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tabs-wrapper::-webkit-scrollbar { height: 4px; }
+        .tabs-wrapper::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+
         .tab-pill { background: #27272a; color: #d4d4d8; border: none; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
         .tab-pill.active { background: #f59e0b; color: #000; }
         .tab-pill.event-tab { background: #8b5cf6; color: #fff; }
@@ -261,6 +272,15 @@
             document.getElementById('current-date').value = today;
             setupRoomSelects();
             renderView();
+
+            // ABILITA SCORRIMENTO ORIZZONTALE CON ROTELLINA DEL MOUSE SU PC
+            const tabsWrapper = document.getElementById('tabs-wrapper');
+            tabsWrapper.addEventListener('wheel', (evt) => {
+                if (evt.deltaY !== 0) {
+                    evt.preventDefault();
+                    tabsWrapper.scrollLeft += evt.deltaY;
+                }
+            }, { passive: false });
         });
 
         function getBookings() { return JSON.parse(localStorage.getItem('vf_bookings') || '[]'); }
