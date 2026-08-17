@@ -102,7 +102,7 @@
         <header>
             <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
             <div class="header-btns">
-                <button class="btn-hdr btn-hdr-print" onclick="printReport()">🔒 🖨️ Stampa / Storico</button>
+                <button class="btn-hdr btn-hdr-print" onclick="openPrintModal()">🔒 🖨️ Stampa / Storico</button>
                 <button class="btn-hdr" onclick="exportBackup()">💾 Backup</button>
                 <button class="btn-hdr" onclick="document.getElementById('import-file').click()">📂 Carica</button>
                 <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBackup(event)">
@@ -132,6 +132,65 @@
 
         <div id="main-view"></div>
 
+    </div>
+
+    <div class="modal" id="print-modal">
+        <div class="modal-content" style="border-top-color: #3b82f6;">
+            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico</div>
+            <form onsubmit="executeFilteredPrint(event)">
+                
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Seleziona Date (Include Retroattive)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data Inizio</label>
+                        <input type="date" id="pr-date-start">
+                    </div>
+                    <div class="form-group">
+                        <label>Data Fine</label>
+                        <input type="date" id="pr-date-end">
+                    </div>
+                </div>
+                
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Filtra per Sale & Eventi</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Filtra Sala</label>
+                        <select id="pr-room">
+                            <option value="ALL">Tutte le Sale</option>
+                            <option value="Sala Esterna">Sala Esterna</option>
+                            <option value="Sala 1">Sala 1</option>
+                            <option value="Sala 2">Sala 2</option>
+                            <option value="Sala Vetrata">Sala Vetrata</option>
+                            <option value="Sala Privée">Sala Privée</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Evento</label>
+                        <select id="pr-event-type">
+                            <option value="ALL">Tutti gli Eventi</option>
+                            <option value="Compleanno">Compleanno</option>
+                            <option value="Matrimonio">Matrimonio</option>
+                            <option value="Laurea">Laurea</option>
+                            <option value="Cresima / Comunione">Cresima / Comunione</option>
+                            <option value="Altro">Altro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Cosa Includere</div>
+                <div class="form-group">
+                    <label>Includi nel Report</label>
+                    <select id="pr-include">
+                        <option value="BOTH">Prenotazioni Tavoli + Eventi</option>
+                        <option value="BOOKINGS">Solo Prenotazioni Tavoli</option>
+                        <option value="EVENTS">Solo Eventi & Festeggiamenti</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-hdr btn-hdr-print" style="width:100%; padding:12px; font-size:14px; justify-content:center; margin-top:10px;">🖨️ Genera & Stampa Report Filtro</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('print-modal')">Annulla</button>
+            </form>
+        </div>
     </div>
 
     <div class="modal" id="booking-modal">
@@ -407,7 +466,7 @@
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('current-date');
             dateInput.value = today;
-            dateInput.min = today; // BLOCCO DATE RETROATTIVE
+            dateInput.min = today; // BLOCCO DATE RETROATTIVE IN APPLICAZIONE
 
             setupRoomSelects();
             renderView();
@@ -648,40 +707,69 @@
         }
 
         // ==========================================
-        // FUNZIONE STAMPA REPORT CON STORICO PROTETTO
+        // APERTURA & FILTRI PER STAMPA E STORICO
         // ==========================================
-        function printReport() {
-            // VERIFICA PASSWORD MASTER PER LA STAMPA / STORICO
-            if (!checkMasterPass()) return;
+        function openPrintModal() {
+            if (checkMasterPass()) { // Protezione PIN "nikita78"
+                document.getElementById('pr-date-start').value = '';
+                document.getElementById('pr-date-end').value = '';
+                document.getElementById('pr-room').value = 'ALL';
+                document.getElementById('pr-event-type').value = 'ALL';
+                document.getElementById('pr-include').value = 'BOTH';
+                openModal('print-modal');
+            }
+        }
 
-            const curDate = document.getElementById('current-date').value;
-            const curShift = document.getElementById('current-shift').value;
-            const bookings = getBookings();
-            const events = getEvents();
+        function executeFilteredPrint(e) {
+            e.preventDefault();
 
-            // Prenotazioni del giorno e servizio corrente
-            const currentBookings = bookings.filter(b => b.date === curDate && b.shift === curShift);
+            const dStart = document.getElementById('pr-date-start').value;
+            const dEnd = document.getElementById('pr-date-end').value;
+            const selRoom = document.getElementById('pr-room').value;
+            const selEventType = document.getElementById('pr-event-type').value;
+            const incType = document.getElementById('pr-include').value;
 
-            // Ordinamento dello storico prenotazioni per data decrescente
-            const sortedAllBookings = [...bookings].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            let bookings = getBookings();
+            let events = getEvents();
 
-            // Totali statistici
+            // Applicazione filtri prenotazioni
+            if (dStart) bookings = bookings.filter(b => b.date >= dStart);
+            if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
+            if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
+
+            // Ordinamento prenotazioni per data decrescente
+            bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            // Applicazione filtri eventi
+            if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
+            if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
+
+            // Calcolo Totali
             const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
-            const totalEventsGuests = events.reduce((sum, e) => sum + (parseInt(e.guests) || 0), 0);
-            const totalEventsRevenue = events.reduce((sum, e) => sum + (parseFloat(e.priceTotal) || 0), 0);
+            const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.guests) || 0), 0);
+            const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
+
+            let periodText = "Tutto lo Storico";
+            if (dStart && dEnd) periodText = `Dal ${dStart} al ${dEnd}`;
+            else if (dStart) periodText = `Dal ${dStart}`;
+            else if (dEnd) periodText = `Fino al ${dEnd}`;
+
+            let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
+            let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
 
             let printWin = window.open('', '_blank');
             let html = `
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Report & Storico - Vecchio Frantoio</title>
+                    <title>Report & Storico Filtro - Vecchio Frantoio</title>
                     <style>
                         body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
-                        h2 { font-size: 15px; margin-top: 25px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
-                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; }
-                        .stat-item { font-size: 12px; font-weight: bold; }
+                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; }
+                        .filter-info { font-size: 11px; background: #f1f5f9; padding: 8px 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
+                        h2 { font-size: 15px; margin-top: 20px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
+                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
+                        .stat-item { font-size: 11px; font-weight: bold; }
                         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
                         th, td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; font-size: 11px; }
                         th { background: #f1f5f9; font-weight: bold; }
@@ -692,121 +780,95 @@
                     </style>
                 </head>
                 <body>
-                    <h1>🌿 Vecchio Frantoio - Report & Storico Cloud</h1>
+                    <h1>🌿 Vecchio Frantoio - Report Personalizzato Storico</h1>
                     
-                    <div class="stats-box">
-                        <div class="stat-item">📦 Totale Prenotazioni Storiche: ${bookings.length} (${totalBookingsGuests} Coperti)</div>
-                        <div class="stat-item">🎉 Totale Eventi Storici: ${events.length} (${totalEventsGuests} Ospiti)</div>
-                        <div class="stat-item">💶 Totale Preventivi Eventi: € ${totalEventsRevenue.toFixed(2)}</div>
+                    <div class="filter-info">
+                        <b>📌 Filtri Applicati:</b><br>
+                        • Periodo: <b>${periodText}</b> (Include Date Retroattive)<br>
+                        • Sala: <b>${roomText}</b> | Tipologia Evento: <b>${eventTypeText}</b>
                     </div>
 
-                    <h2>📋 Prenotazioni Data Selezionata (${curDate} - ${curShift})</h2>
+                    <div class="stats-box">
+                        ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
+                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
+                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
+                    </div>
             `;
 
-            if (currentBookings.length === 0) {
-                html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione inserita per questo servizio.</p>`;
-            } else {
-                html += `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Sala</th>
-                                <th>Tavolo</th>
-                                <th>Nome Cliente</th>
-                                <th>Coperti</th>
-                                <th>Telefono</th>
-                                <th>Note</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-                currentBookings.forEach(b => {
+            if (incType === 'BOTH' || incType === 'BOOKINGS') {
+                html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
+                if (bookings.length === 0) {
+                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata con i filtri selezionati.</p>`;
+                } else {
                     html += `
-                        <tr>
-                            <td><b>${b.room}</b></td>
-                            <td>Tavolo ${b.table}</td>
-                            <td><b>${b.name}</b></td>
-                            <td>${b.guests}</td>
-                            <td>${b.phone || '-'}</td>
-                            <td>${b.notes || '-'}</td>
-                        </tr>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Servizio</th>
+                                    <th>Sala</th>
+                                    <th>Tav.</th>
+                                    <th>Cliente</th>
+                                    <th>Coperti</th>
+                                    <th>Telefono</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                     `;
-                });
-                html += `</tbody></table>`;
+                    bookings.forEach(b => {
+                        html += `
+                            <tr>
+                                <td><b>${b.date || '-'}</b></td>
+                                <td>${b.shift || '-'}</td>
+                                <td>${b.room || '-'}</td>
+                                <td>${b.table || '-'}</td>
+                                <td><b>${b.name || '-'}</b></td>
+                                <td>${b.guests || '1'}</td>
+                                <td>${b.phone || '-'}</td>
+                                <td>${b.notes || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table>`;
+                }
             }
 
-            html += `<h2>📜 Storico Completo di Tutte le Prenotazioni (${bookings.length} Totali)</h2>`;
-
-            if (sortedAllBookings.length === 0) {
-                html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione presente in archivio.</p>`;
-            } else {
-                html += `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Servizio</th>
-                                <th>Sala</th>
-                                <th>Tav.</th>
-                                <th>Cliente</th>
-                                <th>Coperti</th>
-                                <th>Telefono</th>
-                                <th>Note</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-                sortedAllBookings.forEach(b => {
+            if (incType === 'BOTH' || incType === 'EVENTS') {
+                html += `<h2>🎉 Storico Eventi & Festeggiamenti (${events.length})</h2>`;
+                if (events.length === 0) {
+                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato con i filtri selezionati.</p>`;
+                } else {
                     html += `
-                        <tr>
-                            <td><b>${b.date || '-'}</b></td>
-                            <td>${b.shift || '-'}</td>
-                            <td>${b.room || '-'}</td>
-                            <td>${b.table || '-'}</td>
-                            <td><b>${b.name || '-'}</b></td>
-                            <td>${b.guests || '1'}</td>
-                            <td>${b.phone || '-'}</td>
-                            <td>${b.notes || '-'}</td>
-                        </tr>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente / Festeggiato</th>
+                                    <th>Tipo Evento</th>
+                                    <th>Sala & Tavoli</th>
+                                    <th>Ospiti</th>
+                                    <th>Telefono</th>
+                                    <th>Acconto (€)</th>
+                                    <th>Totale Preventivo (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                     `;
-                });
-                html += `</tbody></table>`;
-            }
-
-            html += `<h2>🎉 Storico Completo Eventi & Festeggiamenti (${events.length} Totali)</h2>`;
-
-            if (events.length === 0) {
-                html += `<p style="font-size:11px; color:#666;">Nessun evento registrato in archivio.</p>`;
-            } else {
-                html += `
-                    <table>
-                        <thead>
+                    events.forEach(ev => {
+                        html += `
                             <tr>
-                                <th>Cliente / Festeggiato</th>
-                                <th>Tipo Evento</th>
-                                <th>Sala & Tavoli</th>
-                                <th>Ospiti</th>
-                                <th>Telefono</th>
-                                <th>Acconto (€)</th>
-                                <th>Totale Preventivo (€)</th>
+                                <td><b>${ev.name}</b></td>
+                                <td>${ev.type}</td>
+                                <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : ''}</td>
+                                <td>${ev.guests}</td>
+                                <td>${ev.phone || '-'}</td>
+                                <td>${ev.deposit ? ev.deposit + ' €' : '-'}</td>
+                                <td><b>${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
                             </tr>
-                        </thead>
-                        <tbody>
-                `;
-                events.forEach(e => {
-                    html += `
-                        <tr>
-                            <td><b>${e.name}</b></td>
-                            <td>${e.type}</td>
-                            <td>${e.room} ${e.tables ? '(' + e.tables + ')' : ''}</td>
-                            <td>${e.guests}</td>
-                            <td>${e.phone || '-'}</td>
-                            <td>${e.deposit ? e.deposit + ' €' : '-'}</td>
-                            <td><b>${e.priceTotal ? e.priceTotal + ' €' : '-'}</b></td>
-                        </tr>
-                    `;
-                });
-                html += `</tbody></table>`;
+                        `;
+                    });
+                    html += `</tbody></table>`;
+                }
             }
 
             html += `
@@ -820,6 +882,7 @@
                 </html>
             `;
 
+            closeModal('print-modal');
             printWin.document.write(html);
             printWin.document.close();
         }
