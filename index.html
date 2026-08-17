@@ -20,10 +20,11 @@
 
         /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .logo { font-size: 17px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
+        .logo { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
         .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; font-weight: 700; margin-left: 5px; }
-        .header-btns { display: flex; gap: 4px; }
+        .header-btns { display: flex; gap: 4px; flex-wrap: wrap; }
         .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+        .btn-hdr-print { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 700; }
 
         /* CONTROLS BAR */
         .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
@@ -101,6 +102,7 @@
         <header>
             <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
             <div class="header-btns">
+                <button class="btn-hdr btn-hdr-print" onclick="printReport()">🔒 🖨️ Stampa / Storico</button>
                 <button class="btn-hdr" onclick="exportBackup()">💾 Backup</button>
                 <button class="btn-hdr" onclick="document.getElementById('import-file').click()">📂 Carica</button>
                 <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBackup(event)">
@@ -111,7 +113,7 @@
         <div class="controls-card">
             <div class="ctrl-group">
                 <label>Data</label>
-                <input type="date" id="current-date" onchange="renderView()">
+                <input type="date" id="current-date" onchange="validateDateAndRender()">
             </div>
             <div class="ctrl-group">
                 <label>Orario</label>
@@ -285,6 +287,8 @@
             measurementId: "G-CRM1C9YHC8"
         };
 
+        const MASTER_DELETE_PASS = "nikita78"; // Password Master
+
         let db = null;
         window.vf_bookings = [];
         window.vf_events = [];
@@ -330,6 +334,17 @@
 
         function lockApp() {
             document.getElementById('login-overlay').style.display = 'flex';
+        }
+
+        // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
+        function checkMasterPass() {
+            const pass = prompt("🔐 Inserisci la Password Master per accedere:");
+            if (pass === MASTER_DELETE_PASS) {
+                return true;
+            } else {
+                if (pass !== null) alert("❌ Password errata! Accesso negato.");
+                return false;
+            }
         }
 
         // BACKUP & IMPORT
@@ -390,7 +405,10 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('current-date').value = today;
+            const dateInput = document.getElementById('current-date');
+            dateInput.value = today;
+            dateInput.min = today; // BLOCCO DATE RETROATTIVE
+
             setupRoomSelects();
             renderView();
 
@@ -402,6 +420,16 @@
                 }
             }, { passive: false });
         });
+
+        function validateDateAndRender() {
+            const dateInput = document.getElementById('current-date');
+            const today = new Date().toISOString().split('T')[0];
+            if (dateInput.value < today) {
+                alert("⚠️ Non è possibile selezionare una data passata!");
+                dateInput.value = today;
+            }
+            renderView();
+        }
 
         function setupRoomSelects() {
             const evRoom = document.getElementById('ev-room');
@@ -520,11 +548,13 @@
         function handleTableClick(tableNum, isOccupied) {
             if (isOccupied) {
                 if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
-                    const curDate = document.getElementById('current-date').value;
-                    const curShift = document.getElementById('current-shift').value;
-                    const b = getBookings().find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == tableNum);
-                    if (b && db) {
-                        db.ref('bookings/' + b.id).remove();
+                    if (checkMasterPass()) { // Richiesta Password Master "nikita78"
+                        const curDate = document.getElementById('current-date').value;
+                        const curShift = document.getElementById('current-shift').value;
+                        const b = getBookings().find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == tableNum);
+                        if (b && db) {
+                            db.ref('bookings/' + b.id).remove();
+                        }
                     }
                 }
             } else {
@@ -540,11 +570,19 @@
 
         function saveBooking(e) {
             e.preventDefault();
+            const selectedDate = document.getElementById('current-date').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (selectedDate < today) {
+                alert("⚠️ Errore: Non puoi inserire una prenotazione retroattiva!");
+                return;
+            }
+
             const tableNum = document.getElementById('modal-table-num').value;
             const bookingId = 'b_' + Date.now();
             const newBooking = {
                 id: bookingId,
-                date: document.getElementById('current-date').value,
+                date: selectedDate,
                 shift: document.getElementById('current-shift').value,
                 room: currentActiveTab,
                 table: tableNum,
@@ -601,10 +639,189 @@
 
         function deleteEvent(eventId) {
             if (confirm('Vuoi eliminare questo evento?')) {
-                if (db) {
-                    db.ref('events/' + eventId).remove();
+                if (checkMasterPass()) { // Richiesta Password Master "nikita78"
+                    if (db) {
+                        db.ref('events/' + eventId).remove();
+                    }
                 }
             }
+        }
+
+        // ==========================================
+        // FUNZIONE STAMPA REPORT CON STORICO PROTETTO
+        // ==========================================
+        function printReport() {
+            // VERIFICA PASSWORD MASTER PER LA STAMPA / STORICO
+            if (!checkMasterPass()) return;
+
+            const curDate = document.getElementById('current-date').value;
+            const curShift = document.getElementById('current-shift').value;
+            const bookings = getBookings();
+            const events = getEvents();
+
+            // Prenotazioni del giorno e servizio corrente
+            const currentBookings = bookings.filter(b => b.date === curDate && b.shift === curShift);
+
+            // Ordinamento dello storico prenotazioni per data decrescente
+            const sortedAllBookings = [...bookings].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            // Totali statistici
+            const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
+            const totalEventsGuests = events.reduce((sum, e) => sum + (parseInt(e.guests) || 0), 0);
+            const totalEventsRevenue = events.reduce((sum, e) => sum + (parseFloat(e.priceTotal) || 0), 0);
+
+            let printWin = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Report & Storico - Vecchio Frantoio</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
+                        h2 { font-size: 15px; margin-top: 25px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
+                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; }
+                        .stat-item { font-size: 12px; font-weight: bold; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        th, td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; font-size: 11px; }
+                        th { background: #f1f5f9; font-weight: bold; }
+                        .footer { font-size: 10px; color: #64748b; margin-top: 30px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+                        @media print {
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>🌿 Vecchio Frantoio - Report & Storico Cloud</h1>
+                    
+                    <div class="stats-box">
+                        <div class="stat-item">📦 Totale Prenotazioni Storiche: ${bookings.length} (${totalBookingsGuests} Coperti)</div>
+                        <div class="stat-item">🎉 Totale Eventi Storici: ${events.length} (${totalEventsGuests} Ospiti)</div>
+                        <div class="stat-item">💶 Totale Preventivi Eventi: € ${totalEventsRevenue.toFixed(2)}</div>
+                    </div>
+
+                    <h2>📋 Prenotazioni Data Selezionata (${curDate} - ${curShift})</h2>
+            `;
+
+            if (currentBookings.length === 0) {
+                html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione inserita per questo servizio.</p>`;
+            } else {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sala</th>
+                                <th>Tavolo</th>
+                                <th>Nome Cliente</th>
+                                <th>Coperti</th>
+                                <th>Telefono</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                currentBookings.forEach(b => {
+                    html += `
+                        <tr>
+                            <td><b>${b.room}</b></td>
+                            <td>Tavolo ${b.table}</td>
+                            <td><b>${b.name}</b></td>
+                            <td>${b.guests}</td>
+                            <td>${b.phone || '-'}</td>
+                            <td>${b.notes || '-'}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `<h2>📜 Storico Completo di Tutte le Prenotazioni (${bookings.length} Totali)</h2>`;
+
+            if (sortedAllBookings.length === 0) {
+                html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione presente in archivio.</p>`;
+            } else {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Servizio</th>
+                                <th>Sala</th>
+                                <th>Tav.</th>
+                                <th>Cliente</th>
+                                <th>Coperti</th>
+                                <th>Telefono</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                sortedAllBookings.forEach(b => {
+                    html += `
+                        <tr>
+                            <td><b>${b.date || '-'}</b></td>
+                            <td>${b.shift || '-'}</td>
+                            <td>${b.room || '-'}</td>
+                            <td>${b.table || '-'}</td>
+                            <td><b>${b.name || '-'}</b></td>
+                            <td>${b.guests || '1'}</td>
+                            <td>${b.phone || '-'}</td>
+                            <td>${b.notes || '-'}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `<h2>🎉 Storico Completo Eventi & Festeggiamenti (${events.length} Totali)</h2>`;
+
+            if (events.length === 0) {
+                html += `<p style="font-size:11px; color:#666;">Nessun evento registrato in archivio.</p>`;
+            } else {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente / Festeggiato</th>
+                                <th>Tipo Evento</th>
+                                <th>Sala & Tavoli</th>
+                                <th>Ospiti</th>
+                                <th>Telefono</th>
+                                <th>Acconto (€)</th>
+                                <th>Totale Preventivo (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                events.forEach(e => {
+                    html += `
+                        <tr>
+                            <td><b>${e.name}</b></td>
+                            <td>${e.type}</td>
+                            <td>${e.room} ${e.tables ? '(' + e.tables + ')' : ''}</td>
+                            <td>${e.guests}</td>
+                            <td>${e.phone || '-'}</td>
+                            <td>${e.deposit ? e.deposit + ' €' : '-'}</td>
+                            <td><b>${e.priceTotal ? e.priceTotal + ' €' : '-'}</b></td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `
+                    <div class="footer">
+                        Documento riservato e protetto generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWin.document.write(html);
+            printWin.document.close();
         }
 
         function openModal(id) { document.getElementById(id).classList.add('active'); }
