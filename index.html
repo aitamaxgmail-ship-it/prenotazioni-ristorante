@@ -590,7 +590,7 @@
             `;
         }
 
-        // VISUALIZZAZIONE EVENTI - PREZZI NASCOSTI A SCHERMO - MENU COMPLETO CON ADULTI E BIMBI
+        // VISUALIZZAZIONE EVENTI - CON TASTI STAMPA, MODIFICA ED ELIMINA
         function renderEventsView(container) {
             const events = getEvents();
 
@@ -605,9 +605,10 @@
 
                     eventsListHtml += `
                         <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:12px; position:relative;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px; flex-wrap:wrap; gap:6px;">
                                 <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
                                 <div style="display:flex; gap:6px;">
+                                    <button style="background:#22c55e22; color:#22c55e; border:1px solid #22c55e; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="printSingleEvent('${e.id}')">🖨️ Stampa</button>
                                     <button style="background:#3b82f622; color:#3b82f6; border:1px solid #3b82f6; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="openEventModal('${e.id}')">✏️ Modifica</button>
                                     <button style="background:#ef444422; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="deleteEvent('${e.id}')">🗑️ Elimina</button>
                                 </div>
@@ -654,6 +655,122 @@
                 </div>
                 <div>${eventsListHtml}</div>
             `;
+        }
+
+        // STAMPA SINGOLO EVENTO
+        function printSingleEvent(eventId) {
+            const ev = getEvents().find(item => item.id === eventId);
+            if (!ev) return;
+
+            const adultsCount = parseInt(ev.adults) || 0;
+            const childrenCount = parseInt(ev.children) || 0;
+            const totalGuests = adultsCount + childrenCount;
+
+            let menuAdultiList = [];
+            if(ev.welcome) menuAdultiList.push('<b>🥂 Benvenuto:</b> ' + ev.welcome);
+            if(ev.starter) menuAdultiList.push('<b>🥗 Antipasto:</b> ' + ev.starter);
+            if(ev.first) menuAdultiList.push('<b>🍝 Primi:</b> ' + ev.first);
+            if(ev.second) menuAdultiList.push('<b>🍖 Secondi:</b> ' + ev.second);
+            if(ev.dessert) menuAdultiList.push('<b>🍰 Dolce / Torta:</b> ' + ev.dessert);
+
+            let printWin = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Scheda Evento - ${ev.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+                        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+                        .header p { margin: 4px 0 0 0; font-size: 13px; color: #555; }
+                        .box { border: 1px solid #000; padding: 10px 14px; margin-bottom: 12px; border-radius: 4px; }
+                        .box-title { font-size: 13px; font-weight: bold; background: #eee; padding: 4px 8px; border-bottom: 1px solid #000; margin: -10px -14px 10px -14px; text-transform: uppercase; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+                        .row div { flex: 1; }
+                        .menu-item { font-size: 13px; margin-bottom: 4px; }
+                        .totali-box { font-size: 14px; background: #f9f9f9; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px; }
+                        .footer { text-align: center; font-size: 11px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
+                        @media print { @page { margin: 1.5cm; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🌿 Vecchio Frantoio</h1>
+                        <p>Scheda Dettaglio Evento & Festeggiamento</p>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">📋 Dati Cliente & Evento</div>
+                        <div class="row">
+                            <div><b>Cliente / Festeggiato:</b> ${ev.name}</div>
+                            <div><b>Tipologia Evento:</b> ${ev.type}</div>
+                        </div>
+                        <div class="row">
+                            <div><b>Telefono:</b> ${ev.phone || '-'}</div>
+                            <div><b>Orario Uscita Previsto:</b> ${ev.outTime || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">📍 Sala & Ospiti</div>
+                        <div class="row">
+                            <div><b>Sala Riservata:</b> ${ev.room}</div>
+                            <div><b>Tavoli Riservati:</b> ${ev.tables || '-'}</div>
+                        </div>
+                        <div class="row">
+                            <div><b>Totale Ospiti:</b> ${totalGuests} Totali (${adultsCount} Adulti + ${childrenCount} Bambini)</div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">🍽️ Menu Adulti</div>
+                        ${menuAdultiList.length > 0 ? menuAdultiList.map(m => `<div class="menu-item">${m}</div>`).join('') : '<div class="menu-item"><i>Nessuna portata specificata</i></div>'}
+                    </div>
+
+                    ${(childrenCount > 0 || ev.childMenu) ? `
+                    <div class="box">
+                        <div class="box-title">🎈 Menu Bimbi (${childrenCount} Bambini)</div>
+                        <div class="menu-item">${ev.childMenu || 'Menu bimbi standard'}</div>
+                    </div>
+                    ` : ''}
+
+                    ${(ev.decor || ev.music || ev.notes) ? `
+                    <div class="box">
+                        <div class="box-title">🎨 Extra & Note Speciali</div>
+                        ${ev.decor ? `<div class="menu-item"><b>Addobbi / Tovaglia:</b> ${ev.decor}</div>` : ''}
+                        ${ev.music ? `<div class="menu-item"><b>Musica / SIAE:</b> ${ev.music}</div>` : ''}
+                        ${ev.notes ? `<div class="menu-item" style="color:#c00;"><b>⚠️ Intolleranze / Allergie / Note:</b> ${ev.notes}</div>` : ''}
+                    </div>
+                    ` : ''}
+
+                    <div class="box">
+                        <div class="box-title">💶 Preventivo Economico & Calcoli</div>
+                        <div class="row">
+                            <div><b>Prezzo Adulti:</b> ${ev.priceAdult ? ev.priceAdult + ' € / pers' : '-'}</div>
+                            <div><b>Prezzo Bimbi:</b> ${ev.priceChild ? ev.priceChild + ' € / pers' : '-'}</div>
+                        </div>
+                        <div class="totali-box">
+                            <div class="row">
+                                <div><b>Acconto Versato:</b> ${ev.deposit ? ev.deposit + ' €' : '0 €'}</div>
+                                <div><b style="font-size:15px;">TOTALE EVENTO: ${ev.priceTotal ? ev.priceTotal + ' €' : '0 €'}</b></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        Documento generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
+                    </div>
+
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWin.document.write(html);
+            printWin.document.close();
         }
 
         function handleTableClick(tableNum, isOccupied) {
