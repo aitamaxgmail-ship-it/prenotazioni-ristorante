@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vecchio Frantoio - Gestione Prenotazioni</title>
+    <title>Vecchio Frantoio - Gestione Prenotazioni Cloud</title>
+    
+    <!-- FIREBASE SDKs (Compatibile per Web senza build tool) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 25px; display: flex; justify-content: center; }
+        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 30px; display: flex; justify-content: center; }
         
-        /* APP CONTAINER PER BLOCCARE LA LARGHEZZA SU PC */
-        .app-container { width: 100%; max-width: 480px; margin: 0 auto; }
+        .app-container { width: 100%; max-width: 500px; margin: 0 auto; }
 
-        /* SCHERMATA LOGIN PASSWORD */
+        /* LOGIN OVERLAY */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #121214; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: #1c1c20; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
 
         /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .logo { font-size: 18px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
-        .header-btns { display: flex; gap: 6px; }
-        .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .logo { font-size: 17px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
+        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; font-weight: 700; margin-left: 5px; }
+        .header-btns { display: flex; gap: 4px; }
+        .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 3px; }
 
         /* CONTROLS BAR */
         .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
-        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 5px 6px; font-size: 12px; outline: none; }
+        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; }
 
-        /* ROOM TABS HORIZONTAL SCROLL (OTTIMIZZATO PER PC E MOBILE) */
+        /* TABS SCROLL BAR */
         .tabs-wrapper { 
-            display: flex; 
-            gap: 6px; 
-            overflow-x: auto; 
-            padding-bottom: 6px; 
-            margin-bottom: 12px; 
-            scrollbar-width: thin; 
-            scrollbar-color: #3f3f46 transparent;
-            -webkit-overflow-scrolling: touch;
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; 
+            scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; -webkit-overflow-scrolling: touch; 
         }
         .tabs-wrapper::-webkit-scrollbar { height: 4px; }
         .tabs-wrapper::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
 
-        .tab-pill { background: #27272a; color: #d4d4d8; border: none; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
-        .tab-pill.active { background: #f59e0b; color: #000; }
-        .tab-pill.event-tab { background: #8b5cf6; color: #fff; }
+        .tab-pill { background: #27272a; color: #d4d4d8; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+        .tab-pill.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        .tab-pill.event-tab { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
 
         /* SECTION SUBHEADER */
         .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -51,9 +50,8 @@
         .c-free { color: #22c55e; margin-right: 8px; }
         .c-occ { color: #ef4444; }
 
-        /* TABLES GRID COMPATTA (FORCE 5 COLUMNS) */
+        /* GRID TABLES 5 COLUMNS */
         .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
-
         .table-card { aspect-ratio: 1 / 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
         .table-card:active { transform: scale(0.95); }
         .table-card.free { background: #092615; border: 1.5px solid #22c55e; color: #22c55e; }
@@ -67,11 +65,10 @@
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
-        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
+        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .modal-title { font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; text-align: center; }
-        
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 3px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; font-size: 13px; outline: none; }
@@ -82,13 +79,13 @@
         .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
         .btn-cancel { background: #27272a; color: #e4e4e7; font-weight: 600; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 6px; }
 
-        /* EVENT SECTION STYLING */
         .sec-banner { background: #27272a; border-left: 3px solid #f59e0b; padding: 5px 8px; font-weight: 700; font-size: 12px; color: #f59e0b; margin: 12px 0 8px 0; }
         .empty-box { text-align: center; color: #71717a; font-size: 13px; padding: 30px 0; }
     </style>
 </head>
 <body>
 
+    <!-- OVERLAY LOGIN PASSWORD -->
     <div id="login-overlay">
         <div class="login-card">
             <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px;">🌿 Vecchio Frantoio</h2>
@@ -101,16 +98,21 @@
         </div>
     </div>
 
+    <!-- APP CONTAINER -->
     <div class="app-container">
 
+        <!-- HEADER -->
         <header>
-            <div class="logo">🌿 Vecchio Frantoio</div>
+            <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
             <div class="header-btns">
-                <button class="btn-hdr" onclick="alert('Statistiche disponibili nello storico.')">📊 Statistiche</button>
+                <button class="btn-hdr" onclick="exportBackup()">💾 Backup</button>
+                <button class="btn-hdr" onclick="document.getElementById('import-file').click()">📂 Carica</button>
+                <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBackup(event)">
                 <button class="btn-hdr" onclick="lockApp()">🔒 Blocca</button>
             </div>
         </header>
 
+        <!-- CONTROLS -->
         <div class="controls-card">
             <div class="ctrl-group">
                 <label>Data</label>
@@ -129,12 +131,15 @@
             </div>
         </div>
 
+        <!-- TABS -->
         <div class="tabs-wrapper" id="tabs-wrapper"></div>
 
+        <!-- MAIN VIEW -->
         <div id="main-view"></div>
 
     </div>
 
+    <!-- MODALE PRENOTAZIONE TAVOLO -->
     <div class="modal" id="booking-modal">
         <div class="modal-content">
             <div class="modal-title" id="booking-modal-title">Prenota Tavolo</div>
@@ -164,10 +169,12 @@
         </div>
     </div>
 
+    <!-- MODALE EVENTI & PREVENTIVI COMPLETO -->
     <div class="modal" id="event-modal">
         <div class="modal-content" style="border-top-color: #8b5cf6;">
             <div class="modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
             <form onsubmit="saveEvent(event)">
+                
                 <div class="sec-banner">Dati Cliente & Evento</div>
                 <div class="form-group">
                     <label>Nome Cliente / Festeggiato</label>
@@ -207,39 +214,128 @@
                 </div>
 
                 <div class="sec-banner">Menu & Portate</div>
-                <div class="form-group"><input type="text" id="ev-benvenuto" placeholder="Benvenuto: Es. Prosecco e stuzzichini"></div>
-                <div class="form-group"><input type="text" id="ev-antipasto" placeholder="Antipasto: Es. Tagliere Frantoio e frittelline"></div>
-                <div class="form-group"><input type="text" id="ev-primo" placeholder="Primo / i: Es. Paccheri ai funghi e salsiccia"></div>
-                <div class="form-group"><input type="text" id="ev-secondo" placeholder="Secondo / i: Es. Grigliata mista con patate"></div>
-                <div class="form-group"><input type="text" id="ev-dolci" placeholder="Frutta & Dolci / Torta: Es. Torta Millefoglie"></div>
+                <div class="form-group">
+                    <label>Benvenuto</label>
+                    <input type="text" id="ev-welcome" placeholder="Es. Prosecco e stuzzichini">
+                </div>
+                <div class="form-group">
+                    <label>Antipasto</label>
+                    <input type="text" id="ev-starter" placeholder="Es. Tagliere Frantoio e frittelline">
+                </div>
+                <div class="form-group">
+                    <label>Primo / i</label>
+                    <input type="text" id="ev-first" placeholder="Es. Paccheri ai funghi e salsiccia">
+                </div>
+                <div class="form-group">
+                    <label>Secondo / i</label>
+                    <input type="text" id="ev-second" placeholder="Es. Grigliata mista con patate">
+                </div>
+                <div class="form-group">
+                    <label>Frutta & Dolci / Torta</label>
+                    <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie e frutta di stagione">
+                </div>
 
                 <div class="sec-banner">Dettagli & Extra</div>
                 <div class="form-row">
-                    <div class="form-group"><input type="text" id="ev-addobbi" placeholder="Addobbi / Tovaglia"></div>
-                    <div class="form-group"><input type="text" id="ev-musica" placeholder="Musica / SIAE"></div>
+                    <div class="form-group">
+                        <label>Addobbi / Tovaglia</label>
+                        <input type="text" id="ev-decor" placeholder="Es. Tovaglia Bianca e Verde">
+                    </div>
+                    <div class="form-group">
+                        <label>Musica / SIAE</label>
+                        <input type="text" id="ev-music" placeholder="Es. DJ set / SIAE a carico cliente">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="ev-notes" placeholder="Intolleranze / Allergie / Note: Es. 2 celiaci">
+                    <label>Intolleranze / Allergie / Note</label>
+                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci, 1 vegetariano">
                 </div>
 
                 <div class="sec-banner">Preventivo Economico (€)</div>
                 <div class="form-row">
-                    <div class="form-group"><label>Prezzo a Persona (€)</label><input type="number" id="ev-price" placeholder="35"></div>
-                    <div class="form-group"><label>Totale Evento (€)</label><input type="number" id="ev-total" placeholder="Totale"></div>
+                    <div class="form-group">
+                        <label>Prezzo a Persona (€)</label>
+                        <input type="number" id="ev-price-pp" placeholder="Es. 35" oninput="calcEventTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Totale Evento (€)</label>
+                        <input type="number" id="ev-price-total" placeholder="Totale">
+                    </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Acconto Versato (€)</label><input type="number" id="ev-deposit" value="0"></div>
-                    <div class="form-group"><label>Orario di Uscita</label><input type="text" id="ev-exit" placeholder="Es. Ore 01:30"></div>
+                    <div class="form-group">
+                        <label>Acconto Versato (€)</label>
+                        <input type="number" id="ev-deposit" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Orario di Uscita</label>
+                        <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
+                    </div>
                 </div>
 
-                <button type="submit" class="btn-purple">Salva Preventivo / Evento</button>
+                <button type="submit" class="btn-purple">Salva Preventivo / Evento nel Cloud</button>
                 <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
             </form>
         </div>
     </div>
 
     <script>
-        // CONTROLLO PASSWORD ACCESS (max78)
+        // ==========================================
+        // CONFIGURAZIONE REALE FIREBASE VECCHIOFRANTOIO
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVLYQuJFXNPQOc4NmCK6xxgQu8llqTk84",
+            authDomain: "vecchiofrantoio-38c10.firebaseapp.com",
+            databaseURL: "https://vecchiofrantoio-38c10-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "vecchiofrantoio-38c10",
+            storageBucket: "vecchiofrantoio-38c10.firebasestorage.app",
+            messagingSenderId: "1062473587372",
+            appId: "1:1062473587372:web:984f7424b56f31b7571d09",
+            measurementId: "G-CRM1C9YHC8"
+        };
+
+        let db = null;
+        window.vf_bookings = [];
+        window.vf_events = [];
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+
+            // Sincronizzazione Realtime Prenotazioni
+            db.ref('bookings').on('value', (snapshot) => {
+                const val = snapshot.val();
+                window.vf_bookings = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+                renderView();
+            });
+
+            // Sincronizzazione Realtime Eventi
+            db.ref('events').on('value', (snapshot) => {
+                const val = snapshot.val();
+                window.vf_events = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+                renderView();
+            });
+        } catch(err) {
+            console.error("Errore di connessione a Firebase:", err);
+            document.getElementById('net-status').innerText = '⚠️ Local Mode';
+            document.getElementById('net-status').style.color = '#f59e0b';
+        }
+
+        function getBookings() { return window.vf_bookings || []; }
+        function saveBookings(data) {
+            window.vf_bookings = data;
+            if (db) db.ref('bookings').set(data);
+            else localStorage.setItem('vf_bookings', JSON.stringify(data));
+        }
+
+        function getEvents() { return window.vf_events || []; }
+        function saveEvents(data) {
+            window.vf_events = data;
+            if (db) db.ref('events').set(data);
+            else localStorage.setItem('vf_events', JSON.stringify(data));
+        }
+
+        // CONTROL ACCESS & LOCK
         function checkPassword(e) {
             e.preventDefault();
             const pass = document.getElementById('login-pass').value;
@@ -252,12 +348,41 @@
             }
         }
 
-        // BLOCCA APPLICAZIONE
         function lockApp() {
             document.getElementById('login-overlay').style.display = 'flex';
         }
 
-        // CONFIGURAZIONE SALE E CAPACITA'
+        // BACKUP & IMPORT
+        function exportBackup() {
+            const data = { bookings: getBookings(), events: getEvents(), exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_frantoio_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.bookings) saveBookings(data.bookings);
+                    if (data.events) saveEvents(data.events);
+                    alert('Dati caricati e sincronizzati sul Cloud!');
+                    renderView();
+                } catch (err) {
+                    alert('Errore nel file di backup.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ROOMS CONFIG
         const ROOMS = {
             "Sala Esterna": 18,
             "Sala 1": 15,
@@ -274,7 +399,6 @@
             setupRoomSelects();
             renderView();
 
-            // ABILITA SCORRIMENTO ORIZZONTALE CON ROTELLINA DEL MOUSE SU PC
             const tabsWrapper = document.getElementById('tabs-wrapper');
             tabsWrapper.addEventListener('wheel', (evt) => {
                 if (evt.deltaY !== 0) {
@@ -284,18 +408,11 @@
             }, { passive: false });
         });
 
-        function getBookings() { return JSON.parse(localStorage.getItem('vf_bookings') || '[]'); }
-        function saveBookings(data) { localStorage.setItem('vf_bookings', JSON.stringify(data)); }
-        function getEvents() { return JSON.parse(localStorage.getItem('vf_events') || '[]'); }
-        function saveEvents(data) { localStorage.setItem('vf_events', JSON.stringify(data)); }
-
         function setupRoomSelects() {
             const evRoom = document.getElementById('ev-room');
             if(!evRoom) return;
             evRoom.innerHTML = '';
-            Object.keys(ROOMS).forEach(r => {
-                evRoom.innerHTML += `<option value="${r}">${r}</option>`;
-            });
+            Object.keys(ROOMS).forEach(r => { evRoom.innerHTML += `<option value="${r}">${r}</option>`; });
         }
 
         function renderTabs() {
@@ -310,7 +427,6 @@
                 wrapper.appendChild(btn);
             });
 
-            // TAB EVENTI
             const evBtn = document.createElement('button');
             evBtn.className = `tab-pill event-tab ${currentActiveTab === 'EVENTI' ? 'active' : ''}`;
             evBtn.innerText = `🎉 Eventi & Festeggiamenti`;
@@ -384,9 +500,13 @@
             } else {
                 events.forEach(e => {
                     eventsListHtml += `
-                        <div style="background:#1c1c20; border:1px solid #3f3f46; border-radius:8px; padding:10px; margin-bottom:8px;">
-                            <div style="font-size:14px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</div>
-                            <div style="font-size:11px; color:#a1a1aa; margin-top:3px;">📅 ${e.room} - ${e.guests} Ospiti</div>
+                        <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
+                                <span style="font-size:11px; font-weight:700; color:#f59e0b;">${e.priceTotal ? e.priceTotal + ' €' : ''}</span>
+                            </div>
+                            <div style="font-size:12px; color:#d4d4d8;">📅 ${e.room} - ${e.guests} Ospiti</div>
+                            ${e.tables ? `<div style="font-size:11px; color:#a1a1aa; margin-top:2px;">🪑 Tavoli: ${e.tables}</div>` : ''}
                         </div>
                     `;
                 });
@@ -394,8 +514,8 @@
 
             container.innerHTML = `
                 <div class="sec-header">
-                    <div class="sec-title">🎉 Gestione Eventi & Festa</div>
-                    <button class="btn-hdr" style="background:#f59e0b; color:#000; font-weight:700;" onclick="openModal('event-modal')">+ Nuovo Evento</button>
+                    <div class="sec-title">🎉 Gestione Eventi & Festeggiamenti</div>
+                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openModal('event-modal')">+ Nuovo Evento</button>
                 </div>
                 <div>${eventsListHtml}</div>
             `;
@@ -409,7 +529,6 @@
                     let bookings = getBookings();
                     bookings = bookings.filter(b => !(b.date === curDate && b.shift === curShift && b.room === currentActiveTab && b.table == tableNum));
                     saveBookings(bookings);
-                    renderView();
                 }
             } else {
                 document.getElementById('booking-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${currentActiveTab}`;
@@ -441,7 +560,14 @@
             bookings.push(newBooking);
             saveBookings(bookings);
             closeModal('booking-modal');
-            renderView();
+        }
+
+        function calcEventTotal() {
+            const pp = parseFloat(document.getElementById('ev-price-pp').value) || 0;
+            const guests = parseFloat(document.getElementById('ev-guests').value) || 0;
+            if (pp > 0 && guests > 0) {
+                document.getElementById('ev-price-total').value = pp * guests;
+            }
         }
 
         function saveEvent(e) {
@@ -452,14 +578,26 @@
                 phone: document.getElementById('ev-phone').value,
                 type: document.getElementById('ev-type').value,
                 room: document.getElementById('ev-room').value,
-                guests: document.getElementById('ev-guests').value
+                guests: document.getElementById('ev-guests').value,
+                tables: document.getElementById('ev-tables').value,
+                welcome: document.getElementById('ev-welcome').value,
+                starter: document.getElementById('ev-starter').value,
+                first: document.getElementById('ev-first').value,
+                second: document.getElementById('ev-second').value,
+                dessert: document.getElementById('ev-dessert').value,
+                decor: document.getElementById('ev-decor').value,
+                music: document.getElementById('ev-music').value,
+                notes: document.getElementById('ev-notes').value,
+                pricePP: document.getElementById('ev-price-pp').value,
+                priceTotal: document.getElementById('ev-price-total').value,
+                deposit: document.getElementById('ev-deposit').value,
+                outTime: document.getElementById('ev-out-time').value
             };
 
             const events = getEvents();
             events.push(newEv);
             saveEvents(events);
             closeModal('event-modal');
-            renderView();
         }
 
         function openModal(id) { document.getElementById(id).classList.add('active'); }
