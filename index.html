@@ -136,7 +136,7 @@
 
     <div class="modal" id="print-modal">
         <div class="modal-content" style="border-top-color: #3b82f6;">
-            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico</div>
+            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico Completo</div>
             <form onsubmit="executeFilteredPrint(event)">
                 
                 <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Seleziona Date (Include Retroattive)</div>
@@ -200,7 +200,7 @@
                 <input type="hidden" id="modal-table-num">
                 <div class="form-group">
                     <label>Nome cliente</label>
-                    <input type="text" id="b-name" placeholder="Es. Famiglia Rossi / Prova" required>
+                    <input type="text" id="b-name" placeholder="Es. Famiglia Rossi" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -250,23 +250,29 @@
                     </div>
                 </div>
 
-                <div class="sec-banner">Spazio & Sale Riservate</div>
+                <div class="sec-banner">Spazio, Sale & Numero Ospiti</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Sala Riservata</label>
                         <select id="ev-room"></select>
                     </div>
                     <div class="form-group">
-                        <label>N° Persone / Coperti</label>
-                        <input type="number" id="ev-guests" value="30">
+                        <label>Tavoli Riservati</label>
+                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Tavoli Riservati (es. 1, 2, 3 o Tutti)</label>
-                    <input type="text" id="ev-tables" placeholder="Es. Tavoli 1, 2, 3 e 4">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>N° Adulti</label>
+                        <input type="number" id="ev-adults" value="20" min="0" oninput="calcEventTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>N° Bambini / Bimbi</label>
+                        <input type="number" id="ev-children" value="5" min="0" oninput="calcEventTotal()">
+                    </div>
                 </div>
 
-                <div class="sec-banner">Menu & Portate Selezionate</div>
+                <div class="sec-banner">Menu Adulti</div>
                 <div class="form-group">
                     <label>Benvenuto</label>
                     <input type="text" id="ev-welcome" placeholder="Es. Prosecco e stuzzichini">
@@ -276,16 +282,22 @@
                     <input type="text" id="ev-starter" placeholder="Es. Tagliere Frantoio e frittelline">
                 </div>
                 <div class="form-group">
-                    <label>Primo / i</label>
+                    <label>Primo / i Adulti</label>
                     <input type="text" id="ev-first" placeholder="Es. Paccheri ai funghi e salsiccia">
                 </div>
                 <div class="form-group">
-                    <label>Secondo / i</label>
+                    <label>Secondo / i Adulti</label>
                     <input type="text" id="ev-second" placeholder="Es. Grigliata mista con patate">
                 </div>
                 <div class="form-group">
                     <label>Frutta & Dolci / Torta</label>
-                    <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie e frutta di stagione">
+                    <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie">
+                </div>
+
+                <div class="sec-banner" style="border-left-color: #3b82f6; color: #3b82f6;">Menu Bimbi / Bambini</div>
+                <div class="form-group">
+                    <label>Menu Selezionato per Bambini</label>
+                    <input type="text" id="ev-child-menu" placeholder="Es. Pennette al pomodoro, Cotoletta con patatine">
                 </div>
 
                 <div class="sec-banner">Dettagli & Extra</div>
@@ -296,34 +308,38 @@
                     </div>
                     <div class="form-group">
                         <label>Musica / SIAE</label>
-                        <input type="text" id="ev-music" placeholder="Es. DJ set / SIAE a carico cliente">
+                        <input type="text" id="ev-music" placeholder="Es. DJ set / SIAE cliente">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Intolleranze / Allergie / Variazioni Persone</label>
-                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci, 1 vegetariano">
+                    <label>Intolleranze / Allergie / Note Variazioni</label>
+                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci adulti, 1 intollerante lattosio bimbo">
                 </div>
 
                 <div class="sec-banner">Preventivo Economico (Visibile Solo in Stampa)</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Prezzo a Persona (€)</label>
-                        <input type="number" id="ev-price-pp" placeholder="Es. 35" oninput="calcEventTotal()">
+                        <label>Prezzo Adulto (€/pers)</label>
+                        <input type="number" id="ev-price-adult" placeholder="Es. 35" oninput="calcEventTotal()">
                     </div>
                     <div class="form-group">
-                        <label>Totale Evento (€)</label>
-                        <input type="number" id="ev-price-total" placeholder="Totale">
+                        <label>Prezzo Bambino (€/pers)</label>
+                        <input type="number" id="ev-price-child" placeholder="Es. 15" oninput="calcEventTotal()">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label>Totale Evento Calcolato (€)</label>
+                        <input type="number" id="ev-price-total" placeholder="Totale €" readonly style="background:#18181b; color:#f59e0b; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
                         <label>Acconto Versato (€)</label>
                         <input type="number" id="ev-deposit" value="0">
                     </div>
-                    <div class="form-group">
-                        <label>Orario di Uscita</label>
-                        <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Orario di Uscita Previsto</label>
+                    <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
                 </div>
 
                 <button type="submit" class="btn-purple">💾 Salva Evento / Modifiche</button>
@@ -574,7 +590,7 @@
             `;
         }
 
-        // VISUALIZZAZIONE EVENTI (PREZZI NASCOSTI A SCHERMO - MENU COMPLETO VISIBILE)
+        // VISUALIZZAZIONE EVENTI - PREZZI NASCOSTI A SCHERMO - MENU COMPLETO CON ADULTI E BIMBI
         function renderEventsView(container) {
             const events = getEvents();
 
@@ -583,6 +599,10 @@
                 eventsListHtml = `<div class="empty-box">Nessun evento registrato.</div>`;
             } else {
                 events.forEach(e => {
+                    const adultsCount = parseInt(e.adults) || 0;
+                    const childrenCount = parseInt(e.children) || 0;
+                    const totalGuests = adultsCount + childrenCount;
+
                     eventsListHtml += `
                         <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:12px; position:relative;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px;">
@@ -593,19 +613,27 @@
                                 </div>
                             </div>
                             
-                            <div style="font-size:12px; color:#d4d4d8; margin-bottom:6px;">
-                                📍 <b>Sala:</b> ${e.room} | 👥 <b>Ospiti:</b> ${e.guests} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : ''} ${e.phone ? '| 📞 ' + e.phone : ''} ${e.outTime ? '| ⏰ Uscita: ' + e.outTime : ''}
+                            <div style="font-size:12px; color:#d4d4d8; margin-bottom:6px; line-height:1.4;">
+                                📍 <b>Sala:</b> ${e.room} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : ''}<br>
+                                👥 <b>Ospiti:</b> ${totalGuests} Tot. (${adultsCount} Adulti + ${childrenCount} Bimbi) ${e.phone ? '| 📞 ' + e.phone : ''} ${e.outTime ? '| ⏰ Uscita: ' + e.outTime : ''}
                             </div>
 
                             <div style="background:#27272a; border-radius:6px; padding:8px; margin-top:8px; font-size:11px; color:#e4e4e7; display:flex; flex-direction:column; gap:4px;">
-                                <div style="font-weight:700; color:#f59e0b; font-size:11px; margin-bottom:2px;">🍽️ Menu Selezionato:</div>
+                                <div style="font-weight:700; color:#f59e0b; font-size:11px; margin-bottom:2px;">🍽️ Menu Adulti:</div>
                                 ${e.welcome ? `<div>🥂 <b>Benvenuto:</b> ${e.welcome}</div>` : ''}
                                 ${e.starter ? `<div>🥗 <b>Antipasto:</b> ${e.starter}</div>` : ''}
                                 ${e.first ? `<div>🍝 <b>Primi:</b> ${e.first}</div>` : ''}
                                 ${e.second ? `<div>🍖 <b>Secondi:</b> ${e.second}</div>` : ''}
                                 ${e.dessert ? `<div>🍰 <b>Dolce / Torta:</b> ${e.dessert}</div>` : ''}
-                                ${(!e.welcome && !e.starter && !e.first && !e.second && !e.dessert) ? `<div style="color:#71717a; italic;">Nessuna portata specificata</div>` : ''}
+                                ${(!e.welcome && !e.starter && !e.first && !e.second && !e.dessert) ? `<div style="color:#71717a; font-style:italic;">Nessuna portata adulti specificata</div>` : ''}
                             </div>
+
+                            ${(childrenCount > 0 || e.childMenu) ? `
+                                <div style="background:#1e293b; border:1px solid #3b82f6; border-radius:6px; padding:8px; margin-top:6px; font-size:11px; color:#e2e8f0;">
+                                    <div style="font-weight:700; color:#3b82f6; font-size:11px; margin-bottom:2px;">🎈 Menu Bimbi (${childrenCount} Bambini):</div>
+                                    <div>${e.childMenu || 'Menu bimbi standard'}</div>
+                                </div>
+                            ` : ''}
 
                             ${(e.decor || e.music || e.notes) ? `
                                 <div style="background:#18181b; border:1px solid #27272a; border-radius:6px; padding:6px 8px; margin-top:6px; font-size:11px; color:#a1a1aa;">
@@ -631,7 +659,7 @@
         function handleTableClick(tableNum, isOccupied) {
             if (isOccupied) {
                 if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
-                    if (checkMasterPass()) { // Richiesta Password Master "nikita78"
+                    if (checkMasterPass()) { // Password Master "nikita78"
                         const curDate = document.getElementById('current-date').value;
                         const curShift = document.getElementById('current-shift').value;
                         const b = getBookings().find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == tableNum);
@@ -682,14 +710,16 @@
         }
 
         function calcEventTotal() {
-            const pp = parseFloat(document.getElementById('ev-price-pp').value) || 0;
-            const guests = parseFloat(document.getElementById('ev-guests').value) || 0;
-            if (pp > 0 && guests > 0) {
-                document.getElementById('ev-price-total').value = pp * guests;
-            }
+            const adults = parseFloat(document.getElementById('ev-adults').value) || 0;
+            const children = parseFloat(document.getElementById('ev-children').value) || 0;
+            const priceAdult = parseFloat(document.getElementById('ev-price-adult').value) || 0;
+            const priceChild = parseFloat(document.getElementById('ev-price-child').value) || 0;
+
+            const total = (adults * priceAdult) + (children * priceChild);
+            document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
 
-        // APERTURA MODALE EVENTO (CREAZIONE O EDIT)
+        // APERTURA MODALE EVENTO (CREAZIONE O MODIFICA)
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
@@ -703,17 +733,20 @@
                     document.getElementById('ev-phone').value = ev.phone || '';
                     document.getElementById('ev-type').value = ev.type || 'Compleanno';
                     document.getElementById('ev-room').value = ev.room || 'Sala Esterna';
-                    document.getElementById('ev-guests').value = ev.guests || '';
                     document.getElementById('ev-tables').value = ev.tables || '';
+                    document.getElementById('ev-adults').value = ev.adults !== undefined ? ev.adults : '20';
+                    document.getElementById('ev-children').value = ev.children !== undefined ? ev.children : '0';
                     document.getElementById('ev-welcome').value = ev.welcome || '';
                     document.getElementById('ev-starter').value = ev.starter || '';
                     document.getElementById('ev-first').value = ev.first || '';
                     document.getElementById('ev-second').value = ev.second || '';
                     document.getElementById('ev-dessert').value = ev.dessert || '';
+                    document.getElementById('ev-child-menu').value = ev.childMenu || '';
                     document.getElementById('ev-decor').value = ev.decor || '';
                     document.getElementById('ev-music').value = ev.music || '';
                     document.getElementById('ev-notes').value = ev.notes || '';
-                    document.getElementById('ev-price-pp').value = ev.pricePP || '';
+                    document.getElementById('ev-price-adult').value = ev.priceAdult || '';
+                    document.getElementById('ev-price-child').value = ev.priceChild || '';
                     document.getElementById('ev-price-total').value = ev.priceTotal || '';
                     document.getElementById('ev-deposit').value = ev.deposit || '0';
                     document.getElementById('ev-out-time').value = ev.outTime || '';
@@ -725,21 +758,25 @@
                 document.getElementById('ev-phone').value = '';
                 document.getElementById('ev-type').value = 'Compleanno';
                 document.getElementById('ev-room').value = 'Sala Esterna';
-                document.getElementById('ev-guests').value = '30';
                 document.getElementById('ev-tables').value = '';
+                document.getElementById('ev-adults').value = '20';
+                document.getElementById('ev-children').value = '5';
                 document.getElementById('ev-welcome').value = '';
                 document.getElementById('ev-starter').value = '';
                 document.getElementById('ev-first').value = '';
                 document.getElementById('ev-second').value = '';
                 document.getElementById('ev-dessert').value = '';
+                document.getElementById('ev-child-menu').value = '';
                 document.getElementById('ev-decor').value = '';
                 document.getElementById('ev-music').value = '';
                 document.getElementById('ev-notes').value = '';
-                document.getElementById('ev-price-pp').value = '';
+                document.getElementById('ev-price-adult').value = '';
+                document.getElementById('ev-price-child').value = '';
                 document.getElementById('ev-price-total').value = '';
                 document.getElementById('ev-deposit').value = '0';
                 document.getElementById('ev-out-time').value = '';
             }
+            calcEventTotal();
             openModal('event-modal');
         }
 
@@ -755,17 +792,20 @@
                 phone: document.getElementById('ev-phone').value,
                 type: document.getElementById('ev-type').value,
                 room: document.getElementById('ev-room').value,
-                guests: document.getElementById('ev-guests').value,
                 tables: document.getElementById('ev-tables').value,
+                adults: document.getElementById('ev-adults').value,
+                children: document.getElementById('ev-children').value,
                 welcome: document.getElementById('ev-welcome').value,
                 starter: document.getElementById('ev-starter').value,
                 first: document.getElementById('ev-first').value,
                 second: document.getElementById('ev-second').value,
                 dessert: document.getElementById('ev-dessert').value,
+                childMenu: document.getElementById('ev-child-menu').value,
                 decor: document.getElementById('ev-decor').value,
                 music: document.getElementById('ev-music').value,
                 notes: document.getElementById('ev-notes').value,
-                pricePP: document.getElementById('ev-price-pp').value,
+                priceAdult: document.getElementById('ev-price-adult').value,
+                priceChild: document.getElementById('ev-price-child').value,
                 priceTotal: document.getElementById('ev-price-total').value,
                 deposit: document.getElementById('ev-deposit').value,
                 outTime: document.getElementById('ev-out-time').value
@@ -779,7 +819,7 @@
 
         function deleteEvent(eventId) {
             if (confirm('Vuoi eliminare questo evento?')) {
-                if (checkMasterPass()) { // Richiesta Password Master "nikita78"
+                if (checkMasterPass()) { // Password Master "nikita78"
                     if (db) {
                         db.ref('events/' + eventId).remove();
                     }
@@ -788,10 +828,10 @@
         }
 
         // ==========================================
-        // APERTURA & FILTRI PER STAMPA E STORICO
+        // FILTRI STAMPA & STORICO COMPLETO (INCLUSI PREZZI E MENU)
         // ==========================================
         function openPrintModal() {
-            if (checkMasterPass()) { // Protezione PIN "nikita78"
+            if (checkMasterPass()) { // PIN "nikita78"
                 document.getElementById('pr-date-start').value = '';
                 document.getElementById('pr-date-end').value = '';
                 document.getElementById('pr-room').value = 'ALL';
@@ -813,21 +853,20 @@
             let bookings = getBookings();
             let events = getEvents();
 
-            // Applicazione filtri prenotazioni
+            // Filtri prenotazioni
             if (dStart) bookings = bookings.filter(b => b.date >= dStart);
             if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
             if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
 
-            // Ordinamento prenotazioni per data decrescente
             bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-            // Applicazione filtri eventi
+            // Filtri eventi
             if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
             if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
 
             // Calcolo Totali
             const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
-            const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.guests) || 0), 0);
+            const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.adults) || 0) + (parseInt(ev.children) || 0), 0);
             const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
 
             let periodText = "Tutto lo Storico";
@@ -843,7 +882,7 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Report & Storico Filtro - Vecchio Frantoio</title>
+                    <title>Report & Storico Completo - Vecchio Frantoio</title>
                     <style>
                         body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
                         h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; }
@@ -861,7 +900,7 @@
                     </style>
                 </head>
                 <body>
-                    <h1>🌿 Vecchio Frantoio - Report Personalizzato Storico</h1>
+                    <h1>🌿 Vecchio Frantoio - Report Completo Eventi & Prenotazioni</h1>
                     
                     <div class="filter-info">
                         <b>📌 Filtri Applicati:</b><br>
@@ -872,14 +911,14 @@
                     <div class="stats-box">
                         ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
                         ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
-                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
+                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Previsto Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
                     </div>
             `;
 
             if (incType === 'BOTH' || incType === 'BOOKINGS') {
                 html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
                 if (bookings.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata con i filtri selezionati.</p>`;
+                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata.</p>`;
                 } else {
                     html += `
                         <table>
@@ -916,21 +955,21 @@
             }
 
             if (incType === 'BOTH' || incType === 'EVENTS') {
-                html += `<h2>🎉 Storico Eventi & Festeggiamenti (${events.length})</h2>`;
+                html += `<h2>🎉 Dettaglio Completo Eventi & Festeggiamenti (${events.length})</h2>`;
                 if (events.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato con i filtri selezionati.</p>`;
+                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato.</p>`;
                 } else {
                     html += `
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Cliente / Festeggiato</th>
-                                    <th>Tipo Evento</th>
+                                    <th>Cliente / Evento</th>
                                     <th>Sala & Tavoli</th>
-                                    <th>Ospiti</th>
-                                    <th>Menu Selezionato</th>
-                                    <th>Allergie & Extra</th>
-                                    <th>Prezzo/Pers.</th>
+                                    <th>Ospiti (Adulti/Bimbi)</th>
+                                    <th>Menu Adulti</th>
+                                    <th>Menu Bimbi</th>
+                                    <th>Extra & Allergie</th>
+                                    <th>Prezzi €/Persona</th>
                                     <th>Acconto</th>
                                     <th>Totale (€)</th>
                                 </tr>
@@ -938,29 +977,34 @@
                             <tbody>
                     `;
                     events.forEach(ev => {
-                        let menuStr = [];
-                        if(ev.welcome) menuStr.push('• Benvenuto: ' + ev.welcome);
-                        if(ev.starter) menuStr.push('• Antipasto: ' + ev.starter);
-                        if(ev.first) menuStr.push('• Primi: ' + ev.first);
-                        if(ev.second) menuStr.push('• Secondi: ' + ev.second);
-                        if(ev.dessert) menuStr.push('• Dolce/Torta: ' + ev.dessert);
+                        let menuAdultiStr = [];
+                        if(ev.welcome) menuAdultiStr.push('• Benvenuto: ' + ev.welcome);
+                        if(ev.starter) menuAdultiStr.push('• Antipasto: ' + ev.starter);
+                        if(ev.first) menuAdultiStr.push('• Primi: ' + ev.first);
+                        if(ev.second) menuAdultiStr.push('• Secondi: ' + ev.second);
+                        if(ev.dessert) menuAdultiStr.push('• Dolce/Torta: ' + ev.dessert);
 
                         let extraStr = [];
                         if(ev.decor) extraStr.push('Addobbi: ' + ev.decor);
                         if(ev.music) extraStr.push('Musica: ' + ev.music);
                         if(ev.notes) extraStr.push('Note/Allergie: ' + ev.notes);
 
+                        const nAdults = parseInt(ev.adults) || 0;
+                        const nChildren = parseInt(ev.children) || 0;
+                        const pAdult = ev.priceAdult ? ev.priceAdult + ' €' : '-';
+                        const pChild = ev.priceChild ? ev.priceChild + ' €' : '-';
+
                         html += `
                             <tr>
-                                <td><b>${ev.name}</b><br><small>${ev.phone || ''}</small></td>
-                                <td>${ev.type}</td>
+                                <td><b>${ev.name}</b><br><small>Tipo: ${ev.type}</small><br><small>Tel: ${ev.phone || '-'}</small></td>
                                 <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : ''}</td>
-                                <td>${ev.guests}</td>
-                                <td>${menuStr.join('<br>') || '-'}</td>
+                                <td><b>${nAdults + nChildren} Tot.</b><br>(${nAdults} Adulti + ${nChildren} Bimbi)</td>
+                                <td>${menuAdultiStr.join('<br>') || '-'}</td>
+                                <td>${ev.childMenu || '-'}</td>
                                 <td>${extraStr.join('<br>') || '-'}</td>
-                                <td>${ev.pricePP ? ev.pricePP + ' €' : '-'}</td>
-                                <td>${ev.deposit ? ev.deposit + ' €' : '-'}</td>
-                                <td><b>${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
+                                <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
+                                <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
+                                <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
                             </tr>
                         `;
                     });
