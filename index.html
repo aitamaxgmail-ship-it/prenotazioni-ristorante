@@ -29,7 +29,7 @@
         /* CONTROLS BAR */
         .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
-        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; }
+        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; cursor: pointer; }
 
         /* TABS SCROLL BAR */
         .tabs-wrapper { 
@@ -72,6 +72,7 @@
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 3px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; font-size: 13px; outline: none; }
+        .form-group input[type="date"] { cursor: pointer; }
         .form-group textarea { resize: vertical; height: 50px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
@@ -113,7 +114,7 @@
         <div class="controls-card">
             <div class="ctrl-group">
                 <label>Data</label>
-                <input type="date" id="current-date" onchange="validateDateAndRender()">
+                <input type="date" id="current-date" onclick="this.showPicker && this.showPicker()" onchange="validateDateAndRender()">
             </div>
             <div class="ctrl-group">
                 <label>Orario</label>
@@ -143,11 +144,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Data Inizio</label>
-                        <input type="date" id="pr-date-start">
+                        <input type="date" id="pr-date-start" onclick="this.showPicker && this.showPicker()">
                     </div>
                     <div class="form-group">
                         <label>Data Fine</label>
-                        <input type="date" id="pr-date-end">
+                        <input type="date" id="pr-date-end" onclick="this.showPicker && this.showPicker()">
                     </div>
                 </div>
                 
@@ -228,15 +229,11 @@
             <form onsubmit="saveEvent(event)">
                 <input type="hidden" id="ev-id">
                 
-                <div class="sec-banner">Dati Cliente & Evento</div>
-                <div class="form-group">
-                    <label>Nome Cliente / Festeggiato</label>
-                    <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
-                </div>
+                <div class="sec-banner">Dati Cliente & Data Evento</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Telefono</label>
-                        <input type="tel" id="ev-phone" placeholder="3331234567">
+                        <label>Data Evento</label>
+                        <input type="date" id="ev-date" onclick="this.showPicker && this.showPicker()" required>
                     </div>
                     <div class="form-group">
                         <label>Tipo Evento</label>
@@ -247,6 +244,16 @@
                             <option value="Cresima / Comunione">Cresima / Comunione</option>
                             <option value="Altro">Altro</option>
                         </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Cliente / Festeggiato</label>
+                        <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="ev-phone" placeholder="3331234567">
                     </div>
                 </div>
 
@@ -590,9 +597,11 @@
             `;
         }
 
-        // VISUALIZZAZIONE EVENTI - CON TASTI STAMPA, MODIFICA ED ELIMINA
+        // VISUALIZZAZIONE EVENTI - MOSTRA LA DATA EVENTO IN EVIDENZA
         function renderEventsView(container) {
-            const events = getEvents();
+            let events = getEvents();
+            // Ordina gli eventi per data decrescente
+            events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
             let eventsListHtml = '';
             if (events.length === 0) {
@@ -602,11 +611,15 @@
                     const adultsCount = parseInt(e.adults) || 0;
                     const childrenCount = parseInt(e.children) || 0;
                     const totalGuests = adultsCount + childrenCount;
+                    const formattedDate = e.date ? e.date.split('-').reverse().join('/') : 'Non specificata';
 
                     eventsListHtml += `
                         <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:12px; position:relative;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px; flex-wrap:wrap; gap:6px;">
-                                <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
+                                <div>
+                                    <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
+                                    <div style="font-size:12px; font-weight:800; color:#f59e0b; margin-top:2px;">📅 Data Evento: ${formattedDate}</div>
+                                </div>
                                 <div style="display:flex; gap:6px;">
                                     <button style="background:#22c55e22; color:#22c55e; border:1px solid #22c55e; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="printSingleEvent('${e.id}')">🖨️ Stampa</button>
                                     <button style="background:#3b82f622; color:#3b82f6; border:1px solid #3b82f6; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="openEventModal('${e.id}')">✏️ Modifica</button>
@@ -657,7 +670,7 @@
             `;
         }
 
-        // STAMPA SINGOLO EVENTO
+        // STAMPA SINGOLO EVENTO (CON DATA)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
@@ -665,6 +678,7 @@
             const adultsCount = parseInt(ev.adults) || 0;
             const childrenCount = parseInt(ev.children) || 0;
             const totalGuests = adultsCount + childrenCount;
+            const formattedDate = ev.date ? ev.date.split('-').reverse().join('/') : 'Non specificata';
 
             let menuAdultiList = [];
             if(ev.welcome) menuAdultiList.push('<b>🥂 Benvenuto:</b> ' + ev.welcome);
@@ -703,11 +717,14 @@
                     <div class="box">
                         <div class="box-title">📋 Dati Cliente & Evento</div>
                         <div class="row">
-                            <div><b>Cliente / Festeggiato:</b> ${ev.name}</div>
+                            <div><b>Data Evento:</b> <span style="font-size:15px; font-weight:bold;">${formattedDate}</span></div>
                             <div><b>Tipologia Evento:</b> ${ev.type}</div>
                         </div>
-                        <div class="row">
+                        <div class="row" style="margin-top:5px;">
+                            <div><b>Cliente / Festeggiato:</b> ${ev.name}</div>
                             <div><b>Telefono:</b> ${ev.phone || '-'}</div>
+                        </div>
+                        <div class="row" style="margin-top:5px;">
                             <div><b>Orario Uscita Previsto:</b> ${ev.outTime || '-'}</div>
                         </div>
                     </div>
@@ -836,16 +853,19 @@
             document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
 
-        // APERTURA MODALE EVENTO (CREAZIONE O MODIFICA)
+        // APERTURA MODALE EVENTO (CON CAMPO DATA)
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
+            const today = new Date().toISOString().split('T')[0];
+            const curAppDate = document.getElementById('current-date').value || today;
 
             if (eventId) {
                 const ev = getEvents().find(item => item.id === eventId);
                 if (ev) {
                     idInput.value = ev.id;
                     titleEl.innerText = '✏️ Modifica Evento';
+                    document.getElementById('ev-date').value = ev.date || curAppDate;
                     document.getElementById('ev-name').value = ev.name || '';
                     document.getElementById('ev-phone').value = ev.phone || '';
                     document.getElementById('ev-type').value = ev.type || 'Compleanno';
@@ -871,6 +891,7 @@
             } else {
                 idInput.value = '';
                 titleEl.innerText = '🎉 Nuovo Preventivo & Evento';
+                document.getElementById('ev-date').value = curAppDate;
                 document.getElementById('ev-name').value = '';
                 document.getElementById('ev-phone').value = '';
                 document.getElementById('ev-type').value = 'Compleanno';
@@ -897,7 +918,7 @@
             openModal('event-modal');
         }
 
-        // SALVATAGGIO / AGGIORNAMENTO EVENTO
+        // SALVATAGGIO EVENTO CON DATA
         function saveEvent(e) {
             e.preventDefault();
             const existingId = document.getElementById('ev-id').value;
@@ -905,6 +926,7 @@
 
             const newEv = {
                 id: eventId,
+                date: document.getElementById('ev-date').value,
                 name: document.getElementById('ev-name').value,
                 phone: document.getElementById('ev-phone').value,
                 type: document.getElementById('ev-type').value,
@@ -945,7 +967,7 @@
         }
 
         // ==========================================
-        // FILTRI STAMPA & STORICO COMPLETO (INCLUSI PREZZI E MENU)
+        // FILTRI STAMPA & STORICO COMPLETO
         // ==========================================
         function openPrintModal() {
             if (checkMasterPass()) { // PIN "nikita78"
@@ -970,16 +992,20 @@
             let bookings = getBookings();
             let events = getEvents();
 
-            // Filtri prenotazioni
+            // Filtri prenotazioni tavoli
             if (dStart) bookings = bookings.filter(b => b.date >= dStart);
             if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
             if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
 
             bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-            // Filtri eventi
+            // Filtri eventi (incluse date)
+            if (dStart) events = events.filter(ev => ev.date >= dStart);
+            if (dEnd) events = events.filter(ev => ev.date <= dEnd);
             if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
             if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
+
+            events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
             // Calcolo Totali
             const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
@@ -987,9 +1013,9 @@
             const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
 
             let periodText = "Tutto lo Storico";
-            if (dStart && dEnd) periodText = `Dal ${dStart} al ${dEnd}`;
-            else if (dStart) periodText = `Dal ${dStart}`;
-            else if (dEnd) periodText = `Fino al ${dEnd}`;
+            if (dStart && dEnd) periodText = `Dal ${dStart.split('-').reverse().join('/')} al ${dEnd.split('-').reverse().join('/')}`;
+            else if (dStart) periodText = `Dal ${dStart.split('-').reverse().join('/')}`;
+            else if (dEnd) periodText = `Fino al ${dEnd.split('-').reverse().join('/')}`;
 
             let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
             let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
@@ -1054,9 +1080,10 @@
                             <tbody>
                     `;
                     bookings.forEach(b => {
+                        const bDate = b.date ? b.date.split('-').reverse().join('/') : '-';
                         html += `
                             <tr>
-                                <td><b>${b.date || '-'}</b></td>
+                                <td><b>${bDate}</b></td>
                                 <td>${b.shift || '-'}</td>
                                 <td>${b.room || '-'}</td>
                                 <td>${b.table || '-'}</td>
@@ -1080,6 +1107,7 @@
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Data Evento</th>
                                     <th>Cliente / Evento</th>
                                     <th>Sala & Tavoli</th>
                                     <th>Ospiti (Adulti/Bimbi)</th>
@@ -1094,6 +1122,7 @@
                             <tbody>
                     `;
                     events.forEach(ev => {
+                        const evDate = ev.date ? ev.date.split('-').reverse().join('/') : '-';
                         let menuAdultiStr = [];
                         if(ev.welcome) menuAdultiStr.push('• Benvenuto: ' + ev.welcome);
                         if(ev.starter) menuAdultiStr.push('• Antipasto: ' + ev.starter);
@@ -1113,6 +1142,7 @@
 
                         html += `
                             <tr>
+                                <td><b>${evDate}</b></td>
                                 <td><b>${ev.name}</b><br><small>Tipo: ${ev.type}</small><br><small>Tel: ${ev.phone || '-'}</small></td>
                                 <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : ''}</td>
                                 <td><b>${nAdults + nChildren} Tot.</b><br>(${nAdults} Adulti + ${nChildren} Bimbi)</td>
