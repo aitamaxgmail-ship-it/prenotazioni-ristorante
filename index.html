@@ -488,7 +488,7 @@
             reader.readAsText(file);
         }
 
-        // ROOMS CONFIG
+        // ROOMS CONFIG CON NUMERO MASSIMO TAVOLI PER SALA
         const ROOMS = {
             "Sala Esterna": 18,
             "Sala 1": 15,
@@ -565,7 +565,7 @@
             }
         }
 
-        // FUNZIONI DI SUPPORTO PER CALCOLO TABELLE ED EVENTI
+        // FUNZIONE PER ESTRARRE I TAVOLI DIGITATI DALL'UTENTE
         function getEventTables(ev, roomName) {
             if (ev.room !== roomName) return [];
             const totalTables = ROOMS[roomName] || 20;
@@ -590,7 +590,7 @@
                     if (!isNaN(num)) set.add(num);
                 }
             });
-            return Array.from(set);
+            return Array.from(set).sort((a, b) => a - b);
         }
 
         function isShiftOverlap(shift1, shift2) {
@@ -599,7 +599,7 @@
             return shift1 === shift2;
         }
 
-        // CONTROLLO DISPONIBILITA' TAVOLI IN TEMPO REALE DURANTE LA COMPILAZIONE DELL'EVENTO
+        // CONTROLLO DISPONIBILITA' E ESISTENZA TAVOLI IN TEMPO REALE
         function checkEventTablesAvailability() {
             const evId = document.getElementById('ev-id').value;
             const evDate = document.getElementById('ev-date').value;
@@ -617,8 +617,20 @@
                 return;
             }
 
+            const maxTablesInRoom = ROOMS[evRoom] || 0;
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
+
+            // 0. Controllo TAVOLI INESISTENTI nella sala selezionata
+            if (evTablesStr.trim() !== '') {
+                const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
+                if (invalidTables.length > 0) {
+                    warningEl.style.color = '#ef4444';
+                    warningEl.innerHTML = `❌ TAVOLO NON ESISTENTE: I tavoli [${invalidTables.join(', ')}] non esistono in ${evRoom} (Max ${maxTablesInRoom} tavoli)!`;
+                    if (submitBtn) submitBtn.disabled = true;
+                    return;
+                }
+            }
 
             // 1. Controllo Conflitti con Prenotazioni Tavoli Standard
             const conflictBooking = getBookings().find(b => {
@@ -652,7 +664,7 @@
                 return;
             }
 
-            // Esito positivo: tutti i tavoli selezionati o la sala sono disponibili
+            // Esito positivo: tutti i tavoli selezionati o la sala sono disponibili ed esistenti
             warningEl.style.color = '#22c55e';
             if (evTablesStr.trim() !== '') {
                 warningEl.innerHTML = `🟢 OK: Tavoli ${requestedTables.join(', ')} disponibili in ${evRoom}!`;
@@ -750,7 +762,7 @@
             }
         }
 
-        // SALVA PRENOTAZIONE TAVOLO CON CONTROLLO CONFLITTI E RETROATTIVITA'
+        // SALVA PRENOTAZIONE TAVOLO
         function saveBooking(e) {
             e.preventDefault();
             const selectedDate = document.getElementById('current-date').value;
@@ -1005,7 +1017,7 @@
             document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
 
-        // APERTURA MODALE EVENTO CON BLOCCO MINIMO DATA ODIERNA
+        // APERTURA MODALE EVENTO
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
@@ -1076,7 +1088,7 @@
             openModal('event-modal');
         }
 
-        // SALVATAGGIO EVENTO CON VERIFICA RETROATTIVITÀ E ANTI-ACCAVALLAMENTO
+        // SALVATAGGIO EVENTO CON VERIFICA TAVOLI ESISTENTI E NON SOVRAPPOSTI
         function saveEvent(e) {
             e.preventDefault();
             const existingId = document.getElementById('ev-id').value;
@@ -1093,10 +1105,20 @@
             }
 
             // Calcolo tavoli richiesti
+            const maxTablesInRoom = ROOMS[evRoom] || 0;
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
 
-            // 2. Controllo Conflitti con Prenotazioni Tavoli Standard
+            // 2. Blocco Tavoli Inesistenti nella Sala
+            if (evTablesStr.trim() !== '') {
+                const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
+                if (invalidTables.length > 0) {
+                    alert(`⚠️ Impossibile salvare! I tavoli [${invalidTables.join(', ')}] non esistono in ${evRoom} (questa sala ha al massimo ${maxTablesInRoom} tavoli).`);
+                    return;
+                }
+            }
+
+            // 3. Controllo Conflitti con Prenotazioni Tavoli Standard
             const conflictBooking = getBookings().find(b => {
                 if (b.date !== evDate) return false;
                 if (!isShiftOverlap(b.shift, evShift)) return false;
@@ -1109,7 +1131,7 @@
                 return;
             }
 
-            // 3. Controllo Conflitti con Altri Eventi
+            // 4. Controllo Conflitti con Altri Eventi
             const conflictEvent = getEvents().find(ev => {
                 if (ev.id === existingId) return false; // Esclude se stesso in modifica
                 if (ev.date !== evDate) return false;
