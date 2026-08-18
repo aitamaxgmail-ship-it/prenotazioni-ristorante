@@ -336,7 +336,7 @@
                     <input type="text" id="ev-notes" placeholder="Es. 2 celiaci adulti, 1 intollerante lattosio bimbo">
                 </div>
 
-                <div class="sec-banner">Preventivo Economico (Visibile Solo in Stampa)</div>
+                <div class="sec-banner">Preventivo Economico (Visibile Solo in Stampa Protetta)</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Prezzo Adulto (€/pers)</label>
@@ -383,12 +383,15 @@
             measurementId: "G-CRM1C9YHC8"
         };
 
-        const MASTER_DELETE_PASS = "nikita78"; // Password Master
+        const MASTER_DELETE_PASS = "nikita78"; // Password Master / Supervisore
 
         let db = null;
         window.vf_bookings = [];
         window.vf_events = [];
-        let showNext7DaysEvents = false; // Stato filtro 7 giorni per la sezione Eventi
+
+        // Filtri Date per Eventi
+        let eventFilterStartDate = '';
+        let eventFilterEndDate = '';
 
         try {
             firebase.initializeApp(firebaseConfig);
@@ -434,8 +437,8 @@
         }
 
         // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
-        function checkMasterPass() {
-            const pass = prompt("🔐 Inserisci la Password Master per accedere:");
+        function checkMasterPass(customPrompt = "🔐 Inserisci la Password Master / Supervisore per accedere:") {
+            const pass = prompt(customPrompt);
             if (pass === MASTER_DELETE_PASS) {
                 return true;
             } else {
@@ -622,7 +625,6 @@
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
 
-            // 0. Controllo TAVOLI INESISTENTI nella sala selezionata
             if (evTablesStr.trim() !== '') {
                 const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
                 if (invalidTables.length > 0) {
@@ -633,7 +635,6 @@
                 }
             }
 
-            // 1. Controllo Conflitti con Prenotazioni Tavoli Standard
             const conflictBooking = getBookings().find(b => {
                 if (b.date !== evDate) return false;
                 if (!isShiftOverlap(b.shift, evShift)) return false;
@@ -648,9 +649,8 @@
                 return;
             }
 
-            // 2. Controllo Conflitti con Altri Eventi
             const conflictEvent = getEvents().find(ev => {
-                if (ev.id === evId) return false; // Esclude se stesso se in modifica
+                if (ev.id === evId) return false;
                 if (ev.date !== evDate) return false;
                 if (!isShiftOverlap(ev.shift, evShift)) return false;
                 if (ev.room !== evRoom) return false;
@@ -665,7 +665,6 @@
                 return;
             }
 
-            // Esito positivo: tutti i tavoli selezionati o la sala sono disponibili ed esistenti
             warningEl.style.color = '#22c55e';
             if (evTablesStr.trim() !== '') {
                 warningEl.innerHTML = `🟢 OK: Tavoli ${requestedTables.join(', ')} disponibili in ${evRoom}!`;
@@ -675,7 +674,7 @@
             if (submitBtn) submitBtn.disabled = false;
         }
 
-        // RENDERIZZA TABELLA TAVOLI (MONITORA SIA PRENOTAZIONI CHE EVENTI)
+        // RENDERIZZA TABELLA TAVOLI
         function renderTablesView(container) {
             const curDate = document.getElementById('current-date').value;
             const curShift = document.getElementById('current-shift').value;
@@ -687,10 +686,8 @@
 
             let gridHtml = '';
             for (let i = 1; i <= totalTables; i++) {
-                // Controllo Prenotazione Tradizionale
                 const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && parseInt(item.table) === i);
                 
-                // Controllo Riservazione da Evento
                 const ev = events.find(item => {
                     if (item.date !== curDate) return false;
                     if (!isShiftOverlap(item.shift, curShift)) return false;
@@ -744,7 +741,7 @@
         function handleTableClick(tableNum, statusType, id) {
             if (statusType === 'booking') {
                 if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
-                    if (checkMasterPass()) { // Password Master "nikita78"
+                    if (checkMasterPass()) {
                         if (id && db) {
                             db.ref('bookings/' + id).remove();
                         }
@@ -777,14 +774,12 @@
 
             const tableNum = parseInt(document.getElementById('modal-table-num').value);
 
-            // Controllo Accavallamento Prenotazione Tradizionale
             const existingB = getBookings().find(b => b.date === selectedDate && b.shift === selectedShift && b.room === currentActiveTab && parseInt(b.table) === tableNum);
             if (existingB) {
                 alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già prenotato da "${existingB.name}"!`);
                 return;
             }
 
-            // Controllo Accavallamento Eventi
             const existingEv = getEvents().find(ev => {
                 if (ev.date !== selectedDate) return false;
                 if (!isShiftOverlap(ev.shift, selectedShift)) return false;
@@ -816,34 +811,49 @@
             closeModal('booking-modal');
         }
 
-        // FUNZIONE PER ATTIVARE/DISATTIVARE IL FILTRO DEI 7 GIORNI SUGLI EVENTI
-        function toggleEvents7DaysFilter() {
-            showNext7DaysEvents = !showNext7DaysEvents;
+        // GESTIONE FILTRI DATE EVENTI
+        function updateEventFilters() {
+            eventFilterStartDate = document.getElementById('ev-filter-start').value;
+            eventFilterEndDate = document.getElementById('ev-filter-end').value;
             renderView();
         }
 
-        // VISUALIZZAZIONE SCHEDE EVENTI (ORDINATI PER DATA CRESCENTE + FILTRO 7 GIORNI)
+        function setNext7DaysFilter() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const next7Days = new Date();
+            next7Days.setDate(today.getDate() + 7);
+            const limitStr = next7Days.toISOString().split('T')[0];
+
+            eventFilterStartDate = todayStr;
+            eventFilterEndDate = limitStr;
+            renderView();
+        }
+
+        function resetEventDateFilters() {
+            eventFilterStartDate = '';
+            eventFilterEndDate = '';
+            renderView();
+        }
+
+        // VISUALIZZAZIONE SCHEDE EVENTI (ORDINATI PER DATA CRESCENTE CON FILTRO INTERVALLO DATE)
         function renderEventsView(container) {
             let events = getEvents();
 
-            // 1. FILTRAGGIO EVENTI PROSSIMI 7 GIORNI (SE IL FILTRO È ATTIVO)
-            if (showNext7DaysEvents) {
-                const today = new Date();
-                const todayStr = today.toISOString().split('T')[0];
-
-                const next7Days = new Date();
-                next7Days.setDate(today.getDate() + 7);
-                const limitStr = next7Days.toISOString().split('T')[0];
-
-                events = events.filter(ev => ev.date && ev.date >= todayStr && ev.date <= limitStr);
+            // Applicazione filtri per intervallo date
+            if (eventFilterStartDate) {
+                events = events.filter(ev => ev.date && ev.date >= eventFilterStartDate);
+            }
+            if (eventFilterEndDate) {
+                events = events.filter(ev => ev.date && ev.date <= eventFilterEndDate);
             }
 
-            // 2. ORDINAMENTO CRESCENTE PER DATA (dal più vicino al più lontano)
+            // Ordinamento crescente per data
             events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
             let eventsListHtml = '';
             if (events.length === 0) {
-                eventsListHtml = `<div class="empty-box">${showNext7DaysEvents ? 'Nessun evento previsto nei prossimi 7 giorni.' : 'Nessun evento registrato.'}</div>`;
+                eventsListHtml = `<div class="empty-box">Nessun evento trovato nell'intervallo date selezionato.</div>`;
             } else {
                 events.forEach(e => {
                     const adultsCount = parseInt(e.adults) || 0;
@@ -899,27 +909,48 @@
                 });
             }
 
-            const filterBtnText = showNext7DaysEvents ? '📋 Mostra Tutti' : '📅 Prossimi 7 Giorni';
-            const filterBtnStyle = showNext7DaysEvents 
-                ? 'background:#2563eb; color:#fff; font-weight:700; border:1px solid #3b82f6;' 
-                : 'background:#27272a; color:#e4e4e7; font-weight:600; border:1px solid #3f3f46;';
-
             container.innerHTML = `
                 <div class="sec-header">
                     <div class="sec-title">🎉 Eventi & Festeggiamenti</div>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn-hdr" style="${filterBtnStyle}" onclick="toggleEvents7DaysFilter()">${filterBtnText}</button>
-                        <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openEventModal()">+ Nuovo Evento</button>
+                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openEventModal()">+ Nuovo Evento</button>
+                </div>
+
+                <div style="background:#1c1c20; border:1px solid #27272a; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-size:11px; font-weight:700; color:#8b5cf6; text-transform:uppercase;">📅 Filtra Eventi da una data ad un'altra</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                        <div>
+                            <label style="display:block; font-size:9px; font-weight:700; color:#9ca3af; margin-bottom:2px;">Da Data</label>
+                            <input type="date" id="ev-filter-start" value="${eventFilterStartDate}" onchange="updateEventFilters()" style="width:100%; background:#27272a; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:4px 6px; font-size:11px; outline:none;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:9px; font-weight:700; color:#9ca3af; margin-bottom:2px;">A Data</label>
+                            <input type="date" id="ev-filter-end" value="${eventFilterEndDate}" onchange="updateEventFilters()" style="width:100%; background:#27272a; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:4px 6px; font-size:11px; outline:none;">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px; justify-content:flex-end; margin-top:2px;">
+                        <button class="btn-hdr" style="font-size:10px; padding:3px 8px;" onclick="setNext7DaysFilter()">📅 Prossimi 7 GG</button>
+                        <button class="btn-hdr" style="font-size:10px; padding:3px 8px; background:#ef444422; color:#ef4444; border-color:#ef4444;" onclick="resetEventDateFilters()">✖️ Reset Filtri</button>
                     </div>
                 </div>
+
                 <div>${eventsListHtml}</div>
             `;
         }
 
-        // STAMPA SINGOLO EVENTO
+        // STAMPA SINGOLO EVENTO (CON OPZIONE PREZZI & PASSWORD SUPERVISORE)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
+
+            // Richiesta opzionale per mostrare i prezzi
+            let showPrices = false;
+            const wantPrices = confirm("Vuoi includere il Preventivo Economico, i Prezzi e il Totale nella stampa?");
+            if (wantPrices) {
+                showPrices = checkMasterPass("🔐 Inserisci la Password Supervisore (nikita78) per mostrare i prezzi:");
+                if (!showPrices) {
+                    alert("⚠️ Password errata o annullata! La scheda verrà generata SENZA i prezzi.");
+                }
+            }
 
             const adultsCount = parseInt(ev.adults) || 0;
             const childrenCount = parseInt(ev.children) || 0;
@@ -1007,6 +1038,7 @@
                     </div>
                     ` : ''}
 
+                    ${showPrices ? `
                     <div class="box">
                         <div class="box-title">💶 Preventivo Economico & Calcoli</div>
                         <div class="row">
@@ -1020,6 +1052,7 @@
                             </div>
                         </div>
                     </div>
+                    ` : ''}
 
                     <div class="footer">
                         Documento generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
@@ -1054,7 +1087,7 @@
             const curAppDate = document.getElementById('current-date').value || today;
 
             const evDateInput = document.getElementById('ev-date');
-            evDateInput.min = today; // Imposta il minimo alla data di oggi
+            evDateInput.min = today;
 
             if (eventId) {
                 const ev = getEvents().find(item => item.id === eventId);
@@ -1113,11 +1146,11 @@
                 document.getElementById('ev-out-time').value = '';
             }
             calcEventTotal();
-            checkEventTablesAvailability(); // Esegue il controllo immediato
+            checkEventTablesAvailability();
             openModal('event-modal');
         }
 
-        // SALVATAGGIO EVENTO CON VERIFICA TAVOLI ESISTENTI E NON SOVRAPPOSTI
+        // SALVATAGGIO EVENTO
         function saveEvent(e) {
             e.preventDefault();
             const existingId = document.getElementById('ev-id').value;
@@ -1127,18 +1160,15 @@
             const evTablesStr = document.getElementById('ev-tables').value;
             const today = new Date().toISOString().split('T')[0];
 
-            // 1. Blocco Date Passate
             if (evDate < today) {
                 alert("⚠️ Errore: Non puoi creare o modificare un evento con una data passata!");
                 return;
             }
 
-            // Calcolo tavoli richiesti
             const maxTablesInRoom = ROOMS[evRoom] || 0;
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
 
-            // 2. Blocco Tavoli Inesistenti nella Sala
             if (evTablesStr.trim() !== '') {
                 const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
                 if (invalidTables.length > 0) {
@@ -1147,7 +1177,6 @@
                 }
             }
 
-            // 3. Controllo Conflitti con Prenotazioni Tavoli Standard
             const conflictBooking = getBookings().find(b => {
                 if (b.date !== evDate) return false;
                 if (!isShiftOverlap(b.shift, evShift)) return false;
@@ -1160,9 +1189,8 @@
                 return;
             }
 
-            // 4. Controllo Conflitti con Altri Eventi
             const conflictEvent = getEvents().find(ev => {
-                if (ev.id === existingId) return false; // Esclude se stesso in modifica
+                if (ev.id === existingId) return false;
                 if (ev.date !== evDate) return false;
                 if (!isShiftOverlap(ev.shift, evShift)) return false;
                 if (ev.room !== evRoom) return false;
@@ -1212,7 +1240,7 @@
 
         function deleteEvent(eventId) {
             if (confirm('Vuoi eliminare questo evento?')) {
-                if (checkMasterPass()) { // Password Master "nikita78"
+                if (checkMasterPass()) {
                     if (db) {
                         db.ref('events/' + eventId).remove();
                     }
@@ -1224,7 +1252,7 @@
         // FILTRI STAMPA & STORICO COMPLETO
         // ==========================================
         function openPrintModal() {
-            if (checkMasterPass()) { // PIN "nikita78"
+            if (checkMasterPass()) {
                 document.getElementById('pr-date-start').value = '';
                 document.getElementById('pr-date-end').value = '';
                 document.getElementById('pr-room').value = 'ALL';
@@ -1246,14 +1274,12 @@
             let bookings = getBookings();
             let events = getEvents();
 
-            // Filtri prenotazioni tavoli
             if (dStart) bookings = bookings.filter(b => b.date >= dStart);
             if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
             if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
 
             bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-            // Filtri eventi (incluse date)
             if (dStart) events = events.filter(ev => ev.date >= dStart);
             if (dEnd) events = events.filter(ev => ev.date <= dEnd);
             if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
@@ -1261,7 +1287,6 @@
 
             events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-            // Calcolo Totali
             const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
             const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.adults) || 0) + (parseInt(ev.children) || 0), 0);
             const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
