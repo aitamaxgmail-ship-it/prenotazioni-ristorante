@@ -2,560 +2,1406 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestione Eventi & Festeggiamenti</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vecchio Frantoio - Gestione Prenotazioni Cloud</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .tab-btn.active {
-            background-color: #1e293b;
-            color: #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 30px; display: flex; justify-content: center; }
+        
+        .app-container { width: 100%; max-width: 500px; margin: 0 auto; }
+
+        /* LOGIN OVERLAY */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #121214; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: #1c1c20; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+
+        /* HEADER */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .logo { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
+        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #22c55e22; color: #22c55e; border: 1px solid #22c55e; font-weight: 700; margin-left: 5px; }
+        .header-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+        .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+        .btn-hdr-print { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 700; }
+
+        /* CONTROLS BAR */
+        .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+        .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
+        .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; cursor: pointer; }
+
+        /* TABS SCROLL BAR */
+        .tabs-wrapper { 
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; 
+            scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; -webkit-overflow-scrolling: touch; 
         }
-        .animate-fade-in {
-            animation: fadeIn 0.25s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .tabs-wrapper::-webkit-scrollbar { height: 4px; }
+        .tabs-wrapper::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+
+        .tab-pill { background: #27272a; color: #d4d4d8; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+        .tab-pill.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+        .tab-pill.event-tab { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+
+        /* SECTION SUBHEADER */
+        .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .sec-title { font-size: 16px; font-weight: 700; }
+        .counters { font-size: 12px; font-weight: 600; }
+        .c-free { color: #22c55e; margin-right: 8px; }
+        .c-occ { color: #ef4444; }
+
+        /* GRID TABLES 5 COLUMNS */
+        .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
+        .table-card { aspect-ratio: 1 / 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
+        .table-card:active { transform: scale(0.95); }
+        .table-card.free { background: #092615; border: 1.5px solid #22c55e; color: #22c55e; }
+        .table-card.occupied { background: #380d0f; border: 1.5px solid #ef4444; color: #ef4444; }
+        .table-card.event-occupied { background: #2e1065; border: 1.5px solid #8b5cf6; color: #a78bfa; }
+        
+        .t-num { font-size: 16px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 2px; }
+        .t-status { font-size: 9px; font-weight: 700; text-transform: uppercase; }
+        .t-name { font-size: 9px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
+        .t-occ-badge { background: #ef4444; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+        .t-ev-badge { background: #8b5cf6; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal-title { font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; text-align: center; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 3px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; font-size: 13px; outline: none; }
+        .form-group input[type="date"] { cursor: pointer; }
+        .form-group textarea { resize: vertical; height: 50px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+        .btn-gold { background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
+        .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+        .btn-purple:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-cancel { background: #27272a; color: #e4e4e7; font-weight: 600; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 6px; }
+
+        .sec-banner { background: #27272a; border-left: 3px solid #f59e0b; padding: 5px 8px; font-weight: 700; font-size: 12px; color: #f59e0b; margin: 12px 0 8px 0; }
+        .empty-box { text-align: center; color: #71717a; font-size: 13px; padding: 30px 0; }
     </style>
 </head>
-<body class="text-slate-800 min-h-screen flex flex-col">
+<body>
 
-    <!-- Header / Navbar -->
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 p-2 rounded-lg">
-                    <i class="fa-solid me-0 fa-calendar-check text-xl text-white"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">Gestione Eventi & Festeggiamenti</h1>
-                    <p class="text-xs text-slate-400">Pannello di Controllo Prenotazioni</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition duration-150 flex items-center shadow">
-                    <i class="fa-solid fa-plus mr-2"></i> Nuovo Evento
-                </button>
-            </div>
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px;">🌿 Vecchio Frantoio</h2>
+            <p style="font-size:12px; color:#a1a1aa; margin-bottom:15px;">Inserisci la password di accesso:</p>
+            <form onsubmit="checkPassword(event)">
+                <input type="password" id="login-pass" placeholder="Password" style="width:100%; background:#27272a; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:8px; font-size:14px; outline:none; text-align:center; margin-bottom:12px;" required>
+                <button type="submit" class="btn-gold">Accedi</button>
+            </form>
+            <div id="login-error" style="color:#ef4444; font-size:11px; margin-top:10px; display:none; font-weight:600;">Password errata!</div>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+    <div class="app-container">
 
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
-                <div class="p-3 rounded-lg bg-blue-50 text-blue-600 mr-4">
-                    <i class="fa-solid fa-list-check text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Totale Eventi</p>
-                    <p class="text-2xl font-bold text-slate-900" id="stat-total">0</p>
-                </div>
+        <header>
+            <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
+            <div class="header-btns">
+                <button class="btn-hdr btn-hdr-print" onclick="openPrintModal()">🔒 🖨️ Stampa / Storico</button>
+                <button class="btn-hdr" onclick="exportBackup()">💾 Backup</button>
+                <button class="btn-hdr" onclick="document.getElementById('import-file').click()">📂 Carica</button>
+                <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBackup(event)">
+                <button class="btn-hdr" onclick="lockApp()">🔒 Blocca</button>
             </div>
+        </header>
 
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
-                <div class="p-3 rounded-lg bg-amber-50 text-amber-600 mr-4">
-                    <i class="fa-solid fa-calendar-week text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Prossimi 7 Giorni</p>
-                    <p class="text-2xl font-bold text-amber-600" id="stat-week">0</p>
-                </div>
+        <div class="controls-card">
+            <div class="ctrl-group">
+                <label>Data</label>
+                <input type="date" id="current-date" onclick="this.showPicker && this.showPicker()" onchange="validateDateAndRender()">
             </div>
-
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
-                <div class="p-3 rounded-lg bg-emerald-50 text-emerald-600 mr-4">
-                    <i class="fa-solid fa-circle-check text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Confermati</p>
-                    <p class="text-2xl font-bold text-emerald-600" id="stat-confirmed">0</p>
-                </div>
+            <div class="ctrl-group">
+                <label>Orario</label>
+                <input type="time" id="current-time" value="20:00" onchange="renderView()">
             </div>
-
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
-                <div class="p-3 rounded-lg bg-purple-50 text-purple-600 mr-4">
-                    <i class="fa-solid fa-users text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Ospiti Totali</p>
-                    <p class="text-2xl font-bold text-purple-600" id="stat-guests">0</p>
-                </div>
+            <div class="ctrl-group">
+                <label>Servizio</label>
+                <select id="current-shift" onchange="renderView()">
+                    <option value="Cena">Cena</option>
+                    <option value="Pranzo">Pranzo</option>
+                </select>
             </div>
         </div>
 
-        <!-- Controls Section: Filters & Search -->
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            <!-- Filter Tabs -->
-            <div class="flex flex-wrap gap-2 items-center">
-                <button onclick="setFilter('all')" id="btn-filter-all" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center">
-                    <i class="fa-solid fa-layer-group mr-2"></i> Tutti gli Eventi
-                </button>
+        <div class="tabs-wrapper" id="tabs-wrapper"></div>
 
-                <!-- NUOVO TASTO EVENTI DELLA SETTIMANA -->
-                <button onclick="setFilter('week')" id="btn-filter-week" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition border border-amber-200 flex items-center relative">
-                    <i class="fa-solid fa-clock-rotate-left mr-2"></i> Eventi della Settimana
-                    <span id="badge-week-count" class="ml-2 bg-amber-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold">0</span>
-                </button>
+        <div id="main-view"></div>
 
-                <button onclick="setFilter('confirmed')" id="btn-filter-confirmed" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center">
-                    <i class="fa-solid fa-circle-check text-emerald-500 mr-2"></i> Confermati
-                </button>
+    </div>
 
-                <button onclick="setFilter('pending')" id="btn-filter-pending" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center">
-                    <i class="fa-solid fa-hourglass-half text-amber-500 mr-2"></i> In Attesa
-                </button>
-            </div>
-
-            <!-- Search & Order info -->
-            <div class="flex items-center gap-3">
-                <div class="relative flex-grow md:w-64">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                    <input type="text" id="search-input" oninput="renderEvents()" placeholder="Cerca evento o cliente..." class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="text-xs text-slate-500 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 whitespace-nowrap flex items-center">
-                    <i class="fa-solid fa-arrow-down-wide-short mr-1.5 text-indigo-600"></i> Ordine: <strong>Dal più recente</strong>
-                </div>
-            </div>
-        </div>
-
-        <!-- Events List Header / Notice -->
-        <div id="active-filter-banner" class="hidden mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-amber-800 text-sm">
-            <div class="flex items-center">
-                <i class="fa-solid fa-calendar-week text-amber-600 mr-2 text-base"></i>
-                <span>Filtro attivo: <strong>Eventi dei prossimi 7 giorni</strong> (da oggi a 7 giorni)</span>
-            </div>
-            <button onclick="setFilter('all')" class="text-xs text-amber-800 underline font-semibold hover:text-amber-950">
-                Mostra tutti
-            </button>
-        </div>
-
-        <!-- Events Table / Cards -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100" onclick="toggleSortDirection()">
-                                Data & Ora <i id="sort-icon" class="fa-solid fa-sort-down ml-1 text-indigo-600"></i>
-                            </th>
-                            <th class="py-3.5 px-4">Evento / Titolo</th>
-                            <th class="py-3.5 px-4">Cliente / Contatto</th>
-                            <th class="py-3.5 px-4 text-center">Tipo</th>
-                            <th class="py-3.5 px-4 text-center">Ospiti</th>
-                            <th class="py-3.5 px-4 text-center">Stato</th>
-                            <th class="py-3.5 px-4 text-right">Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="events-table-body" class="divide-y divide-slate-100 text-sm">
-                        <!-- Items rendered via JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Empty State -->
-            <div id="empty-state" class="hidden py-12 text-center">
-                <div class="w-16 h-16 mx-auto mb-3 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                    <i class="fa-regular fa-calendar-xmark text-2xl"></i>
-                </div>
-                <h3 class="text-base font-semibold text-slate-700">Nessun evento trovato</h3>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto" id="empty-state-msg">Non ci sono eventi che corrispondono ai criteri di ricerca selezionati.</p>
-                <button onclick="setFilter('all')" class="mt-4 text-xs font-medium text-indigo-600 hover:text-indigo-800 underline">
-                    Azzera filtri
-                </button>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Modal Form (Aggiungi/Modifica Evento) -->
-    <div id="event-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden animate-fade-in">
-            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-                <h3 class="font-bold text-lg flex items-center" id="modal-title">
-                    <i class="fa-solid fa-calendar-plus mr-2 text-indigo-400"></i> Nuovo Evento
-                </h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-            </div>
-            
-            <form id="event-form" onsubmit="saveEvent(event)" class="p-6 space-y-4">
-                <input type="hidden" id="event-id">
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nome Evento / Titolo *</label>
-                    <input type="text" id="event-title" required placeholder="Es. Festa 30 Anni Marco, Matrimonio Luca e Elena" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cliente / Riferimento *</label>
-                        <input type="text" id="event-client" required placeholder="Nome e Cognome" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+    <div class="modal" id="print-modal">
+        <div class="modal-content" style="border-top-color: #3b82f6;">
+            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico Completo</div>
+            <form onsubmit="executeFilteredPrint(event)">
+                
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Seleziona Date (Include Retroattive)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data Inizio</label>
+                        <input type="date" id="pr-date-start" onclick="this.showPicker && this.showPicker()">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Telefono / Email</label>
-                        <input type="text" id="event-phone" placeholder="333 1234567" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <div class="form-group">
+                        <label>Data Fine</label>
+                        <input type="date" id="pr-date-end" onclick="this.showPicker && this.showPicker()">
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Data Evento *</label>
-                        <input type="date" id="event-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Filtra per Sale & Eventi</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Filtra Sala</label>
+                        <select id="pr-room">
+                            <option value="ALL">Tutte le Sale</option>
+                            <option value="Sala Esterna">Sala Esterna</option>
+                            <option value="Sala 1">Sala 1</option>
+                            <option value="Sala 2">Sala 2</option>
+                            <option value="Sala Vetrata">Sala Vetrata</option>
+                            <option value="Sala Privée">Sala Privée</option>
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Ora inizio *</label>
-                        <input type="time" id="event-time" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Categoria *</label>
-                        <select id="event-category" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                    <div class="form-group">
+                        <label>Tipo Evento</label>
+                        <select id="pr-event-type">
+                            <option value="ALL">Tutti gli Eventi</option>
                             <option value="Compleanno">Compleanno</option>
                             <option value="Matrimonio">Matrimonio</option>
                             <option value="Laurea">Laurea</option>
-                            <option value="Aziendale">Aziendale</option>
-                            <option value="Battesimo/Comunione">Battesimo / Comunione</option>
-                            <option value="Altro">Altro Festeggiamento</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">N° Ospiti</label>
-                        <input type="number" id="event-guests" min="1" value="20" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Stato *</label>
-                        <select id="event-status" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="Confermato">Confermato</option>
-                            <option value="In attesa">In attesa</option>
-                            <option value="Annullato">Annullato</option>
+                            <option value="Cresima / Comunione">Cresima / Comunione</option>
+                            <option value="Altro">Altro</option>
                         </select>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Note / Richieste Particolari</label>
-                    <textarea id="event-notes" rows="2" placeholder="Menu, intolleranze, DJ set, allestimento..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Cosa Includere</div>
+                <div class="form-group">
+                    <label>Includi nel Report</label>
+                    <select id="pr-include">
+                        <option value="BOTH">Prenotazioni Tavoli + Eventi</option>
+                        <option value="BOOKINGS">Solo Prenotazioni Tavoli</option>
+                        <option value="EVENTS">Solo Eventi & Festeggiamenti</option>
+                    </select>
                 </div>
 
-                <div class="pt-3 flex justify-end space-x-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100 font-medium">
-                        Annulla
-                    </button>
-                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow">
-                        Salva Evento
-                    </button>
-                </div>
+                <button type="submit" class="btn-hdr btn-hdr-print" style="width:100%; padding:12px; font-size:14px; justify-content:center; margin-top:10px;">🖨️ Genera & Stampa Report Filtro</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('print-modal')">Annulla</button>
             </form>
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <div class="modal" id="booking-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="booking-modal-title">Prenota Tavolo</div>
+            <form onsubmit="saveBooking(event)">
+                <input type="hidden" id="modal-table-num">
+                <div class="form-group">
+                    <label>Nome cliente</label>
+                    <input type="text" id="b-name" placeholder="Es. Famiglia Rossi" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Coperti</label>
+                        <input type="number" id="b-guests" value="2" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="b-phone" placeholder="Es. 3331234567">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Note (Allergie, intolleranze, richieste...)</label>
+                    <textarea id="b-notes" placeholder="Es. Celiaco, seggiolone..."></textarea>
+                </div>
+                <button type="submit" class="btn-gold">Conferma prenotazione</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('booking-modal')">Annulla</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="event-modal">
+        <div class="modal-content" style="border-top-color: #8b5cf6;">
+            <div class="modal-title" id="event-modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
+            <form onsubmit="saveEvent(event)">
+                <input type="hidden" id="ev-id">
+                
+                <div class="sec-banner">Dati Cliente, Data & Servizio</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data Evento</label>
+                        <input type="date" id="ev-date" onclick="this.showPicker && this.showPicker()" onchange="checkEventTablesAvailability()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Servizio</label>
+                        <select id="ev-shift" onchange="checkEventTablesAvailability()">
+                            <option value="Cena">Cena</option>
+                            <option value="Pranzo">Pranzo</option>
+                            <option value="Tutto il giorno">Tutto il giorno</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Cliente / Festeggiato</label>
+                        <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Evento</label>
+                        <select id="ev-type">
+                            <option value="Compleanno">Compleanno</option>
+                            <option value="Matrimonio">Matrimonio</option>
+                            <option value="Laurea">Laurea</option>
+                            <option value="Cresima / Comunione">Cresima / Comunione</option>
+                            <option value="Altro">Altro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Telefono Cliente</label>
+                    <input type="tel" id="ev-phone" placeholder="Es. 3331234567">
+                </div>
+
+                <div class="sec-banner">Spazio, Sale & Numero Ospiti</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sala Riservata</label>
+                        <select id="ev-room" onchange="checkEventTablesAvailability()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tavoli (Vuoto = Tutta la Sala)</label>
+                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3 o lascia vuoto" oninput="checkEventTablesAvailability()">
+                    </div>
+                </div>
+                <div id="ev-tables-warning" style="font-size:11px; font-weight:700; margin-bottom:10px; min-height:16px;"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>N° Adulti</label>
+                        <input type="number" id="ev-adults" value="20" min="0" oninput="calcEventTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>N° Bambini / Bimbi</label>
+                        <input type="number" id="ev-children" value="5" min="0" oninput="calcEventTotal()">
+                    </div>
+                </div>
+
+                <div class="sec-banner">Menu Adulti</div>
+                <div class="form-group">
+                    <label>Benvenuto</label>
+                    <input type="text" id="ev-welcome" placeholder="Es. Prosecco e stuzzichini">
+                </div>
+                <div class="form-group">
+                    <label>Antipasto</label>
+                    <input type="text" id="ev-starter" placeholder="Es. Tagliere Frantoio e frittelline">
+                </div>
+                <div class="form-group">
+                    <label>Primo / i Adulti</label>
+                    <input type="text" id="ev-first" placeholder="Es. Paccheri ai funghi e salsiccia">
+                </div>
+                <div class="form-group">
+                    <label>Secondo / i Adulti</label>
+                    <input type="text" id="ev-second" placeholder="Es. Grigliata mista con patate">
+                </div>
+                <div class="form-group">
+                    <label>Frutta & Dolci / Torta</label>
+                    <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie">
+                </div>
+
+                <div class="sec-banner" style="border-left-color: #3b82f6; color: #3b82f6;">Menu Bimbi / Bambini</div>
+                <div class="form-group">
+                    <label>Menu Selezionato per Bambini</label>
+                    <input type="text" id="ev-child-menu" placeholder="Es. Pennette al pomodoro, Cotoletta con patatine">
+                </div>
+
+                <div class="sec-banner">Dettagli & Extra</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Addobbi / Tovaglia / Colori</label>
+                        <input type="text" id="ev-decor" placeholder="Es. Tovaglia Bianca e Verde">
+                    </div>
+                    <div class="form-group">
+                        <label>Musica / SIAE</label>
+                        <input type="text" id="ev-music" placeholder="Es. DJ set / SIAE cliente">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Intolleranze / Allergie / Note Variazioni</label>
+                    <input type="text" id="ev-notes" placeholder="Es. 2 celiaci adulti, 1 intollerante lattosio bimbo">
+                </div>
+
+                <div class="sec-banner">Preventivo Economico (Visibile Solo in Stampa)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Prezzo Adulto (€/pers)</label>
+                        <input type="number" id="ev-price-adult" placeholder="Es. 35" oninput="calcEventTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Prezzo Bambino (€/pers)</label>
+                        <input type="number" id="ev-price-child" placeholder="Es. 15" oninput="calcEventTotal()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Totale Evento Calcolato (€)</label>
+                        <input type="number" id="ev-price-total" placeholder="Totale €" readonly style="background:#18181b; color:#f59e0b; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Acconto Versato (€)</label>
+                        <input type="number" id="ev-deposit" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Orario di Uscita Previsto</label>
+                    <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
+                </div>
+
+                <button type="submit" id="ev-submit-btn" class="btn-purple">💾 Salva Evento / Modifiche</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Dati Iniziali Demo
-        let initialData = [
-            { id: "1", title: "Compleanno 18 Anni Sofia", client: "Sofia Rossi", phone: "333 9876543", date: getFormattedDate(1), time: "20:30", category: "Compleanno", guests: 35, status: "Confermato", notes: "Torta al cioccolato, DJ set in terrazza" },
-            { id: "2", title: "Festa Laurea Ingegneria Alessandro", client: "Alessandro Bianchi", phone: "340 1122334", date: getFormattedDate(3), time: "19:00", category: "Laurea", guests: 25, status: "Confermato", notes: "Apericena a buffet" },
-            { id: "3", title: "Cena Aziendale Tech Solutions", client: "Dott. Conti", phone: "02 887766", date: getFormattedDate(5), time: "20:00", category: "Aziendale", guests: 50, status: "In attesa", notes: "Proiettore richiesto per presentazione" },
-            { id: "4", title: "Battesimo Tommaso", client: "Giulia Ferrari", phone: "328 5544332", date: getFormattedDate(12), time: "12:30", category: "Battesimo/Comunione", guests: 40, status: "Confermato", notes: "Pranzo servito al tavolo" },
-            { id: "5", title: "Anniversario di Nozze 25°", client: "Roberto e Maria", phone: "335 6677889", date: getFormattedDate(-2), time: "21:00", category: "Altro", guests: 30, status: "Confermato", notes: "Tavolo imperiale con composizione floreale" },
-            { id: "6", title: "Festa di Compleanno Matteo", client: "Matteo Neri", phone: "347 9988776", date: getFormattedDate(18), time: "21:00", category: "Compleanno", guests: 20, status: "In attesa", notes: "Richiesta opzione vegetariana per 4 persone" }
-        ];
+        // ==========================================
+        // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVLYQuJFXNPQOc4NmCK6xxgQu8llqTk84",
+            authDomain: "vecchiofrantoio-38c10.firebaseapp.com",
+            databaseURL: "https://vecchiofrantoio-38c10-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "vecchiofrantoio-38c10",
+            storageBucket: "vecchiofrantoio-38c10.firebasestorage.app",
+            messagingSenderId: "1062473587372",
+            appId: "1:1062473587372:web:984f7424b56f31b7571d09",
+            measurementId: "G-CRM1C9YHC8"
+        };
 
-        // Funzione helper per generare date relative a oggi
-        function getFormattedDate(offsetDays) {
-            const d = new Date();
-            d.setDate(d.getDate() + offsetDays);
-            return d.toISOString().split('T')[0];
-        }
+        const MASTER_DELETE_PASS = "nikita78"; // Password Master
 
-        // Caricamento eventi da LocalStorage o dati demo
-        let events = JSON.parse(localStorage.getItem('gestione_eventi_db')) || initialData;
-        let currentFilter = 'all';
-        let sortDesc = true; // Default: dal più recente a scendere
+        let db = null;
+        window.vf_bookings = [];
+        window.vf_events = [];
 
-        // Salva in LocalStorage
-        function saveToStorage() {
-            localStorage.setItem('gestione_eventi_db', JSON.stringify(events));
-        }
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
 
-        // Calcola se una data è nei prossimi 7 giorni (compreso oggi)
-        function isWithinNext7Days(dateString) {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            
-            const nextWeek = new Date(today);
-            nextWeek.setDate(today.getDate() + 7);
-            nextWeek.setHours(23,59,59,999);
-
-            const eventDate = new Date(dateString + 'T00:00:00');
-            return eventDate >= today && eventDate <= nextWeek;
-        }
-
-        // Renderizza la tabella e aggiorna le statistiche
-        function renderEvents() {
-            const tbody = document.getElementById('events-table-body');
-            const searchVal = document.getElementById('search-input').value.toLowerCase();
-            tbody.innerHTML = '';
-
-            // 1. Ordina sempre gli eventi per Data & Ora (Default: dal più recente a scendere)
-            events.sort((a, b) => {
-                const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
-                const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
-                return sortDesc ? dateB - dateA : dateA - dateB;
+            // Sincronizzazione Realtime Prenotazioni
+            db.ref('bookings').on('value', (snapshot) => {
+                const val = snapshot.val();
+                window.vf_bookings = val ? Object.values(val) : [];
+                renderView();
             });
 
-            // 2. Filtra gli eventi
-            let filtered = events.filter(ev => {
-                // Filtro Ricerca Testuale
-                const matchesSearch = ev.title.toLowerCase().includes(searchVal) || 
-                                      ev.client.toLowerCase().includes(searchVal) ||
-                                      ev.category.toLowerCase().includes(searchVal);
-                if (!matchesSearch) return false;
-
-                // Filtro Tab
-                if (currentFilter === 'confirmed') return ev.status === 'Confermato';
-                if (currentFilter === 'pending') return ev.status === 'In attesa';
-                if (currentFilter === 'week') return isWithinNext7Days(ev.date);
-
-                return true;
+            // Sincronizzazione Realtime Eventi
+            db.ref('events').on('value', (snapshot) => {
+                const val = snapshot.val();
+                window.vf_events = val ? Object.values(val) : [];
+                renderView();
             });
-
-            // Aggiorna banner filtro settimana
-            const weekBanner = document.getElementById('active-filter-banner');
-            if (currentFilter === 'week') {
-                weekBanner.classList.remove('hidden');
-            } else {
-                weekBanner.classList.add('hidden');
-            }
-
-            // Mostra o nascondi empty state
-            const emptyState = document.getElementById('empty-state');
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            // 3. Renderizza le righe
-            filtered.forEach(ev => {
-                const isWeekEvent = isWithinNext7Days(ev.date);
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100" + (isWeekEvent && currentFilter !== 'week' ? " bg-amber-50/30" : "");
-
-                // Formattazione Data
-                const d = new Date(ev.date + 'T00:00:00');
-                const formattedDate = d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-
-                // Badge Stato
-                let statusBadge = '';
-                if (ev.status === 'Confermato') {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check mr-1 text-xs"></i> Confermato</span>`;
-                } else if (ev.status === 'In attesa') {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"><i class="fa-solid fa-clock mr-1 text-xs"></i> In Attesa</span>`;
-                } else {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800"><i class="fa-solid fa-xmark mr-1 text-xs"></i> Annullato</span>`;
-                }
-
-                // Badge Settimana
-                const weekHighlight = isWeekEvent ? `<span class="ml-2 inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded uppercase tracking-wider"><i class="fa-solid fa-bolt mr-1"></i> Prossimi 7 gg</span>` : '';
-
-                tr.innerHTML = `
-                    <td class="py-3.5 px-4 whitespace-nowrap">
-                        <div class="font-semibold text-slate-900 capitalize">${formattedDate}</div>
-                        <div class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${ev.time}</div>
-                    </td>
-                    <td class="py-3.5 px-4">
-                        <div class="font-medium text-slate-900">${ev.title} ${weekHighlight}</div>
-                        <div class="text-xs text-slate-500 truncate max-w-xs">${ev.notes || 'Nessuna nota'}</div>
-                    </td>
-                    <td class="py-3.5 px-4">
-                        <div class="font-medium text-slate-800">${ev.client}</div>
-                        <div class="text-xs text-slate-500">${ev.phone || '-'}</div>
-                    </td>
-                    <td class="py-3.5 px-4 text-center">
-                        <span class="inline-block px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 text-slate-700">${ev.category}</span>
-                    </td>
-                    <td class="py-3.5 px-4 text-center font-medium text-slate-700">
-                        <i class="fa-solid fa-users text-slate-400 mr-1 text-xs"></i> ${ev.guests}
-                    </td>
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                        ${statusBadge}
-                    </td>
-                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button onclick="editEvent('${ev.id}')" title="Modifica" class="text-slate-400 hover:text-indigo-600 p-1.5 transition">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteEvent('${ev.id}')" title="Elimina" class="text-slate-400 hover:text-rose-600 p-1.5 transition ml-1">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            updateStats();
+        } catch(err) {
+            console.error("Errore di connessione a Firebase:", err);
+            document.getElementById('net-status').innerText = '⚠️ Local Mode';
+            document.getElementById('net-status').style.color = '#f59e0b';
         }
 
-        // Aggiorna le schede statistiche e i contatori
-        function updateStats() {
-            document.getElementById('stat-total').innerText = events.length;
+        function getBookings() { return window.vf_bookings || []; }
+        function getEvents() { return window.vf_events || []; }
 
-            const weekEvents = events.filter(e => isWithinNext7Days(e.date));
-            document.getElementById('stat-week').innerText = weekEvents.length;
-            document.getElementById('badge-week-count').innerText = weekEvents.length;
-
-            const confirmed = events.filter(e => e.status === 'Confermato').length;
-            document.getElementById('stat-confirmed').innerText = confirmed;
-
-            const totalGuests = events.reduce((acc, curr) => acc + (parseInt(curr.guests) || 0), 0);
-            document.getElementById('stat-guests').innerText = totalGuests;
-        }
-
-        // Imposta il filtro attivo
-        function setFilter(filterType) {
-            currentFilter = filterType;
-            
-            // Gestione stile bottoni tab
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-slate-900', 'text-white');
-                if (btn.id !== 'btn-filter-week') {
-                    btn.classList.add('text-slate-600');
-                }
-            });
-
-            if (filterType === 'all') document.getElementById('btn-filter-all').classList.add('active');
-            if (filterType === 'week') document.getElementById('btn-filter-week').classList.add('active');
-            if (filterType === 'confirmed') document.getElementById('btn-filter-confirmed').classList.add('active');
-            if (filterType === 'pending') document.getElementById('btn-filter-pending').classList.add('active');
-
-            renderEvents();
-        }
-
-        // Inverte l'ordine di data
-        function toggleSortDirection() {
-            sortDesc = !sortDesc;
-            const icon = document.getElementById('sort-icon');
-            icon.className = sortDesc ? "fa-solid fa-sort-down ml-1 text-indigo-600" : "fa-solid fa-sort-up ml-1 text-indigo-600";
-            renderEvents();
-        }
-
-        // Gestione Modal
-        function openModal(isEdit = false) {
-            if (!isEdit) {
-                document.getElementById('event-form').reset();
-                document.getElementById('event-id').value = '';
-                document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-calendar-plus mr-2 text-indigo-400"></i> Nuovo Evento`;
-                document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
-                document.getElementById('event-time').value = "20:00";
-            }
-            document.getElementById('event-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('event-modal').classList.add('hidden');
-        }
-
-        // Salvataggio Evento (Nuovo o Modifica)
-        function saveEvent(e) {
+        // CONTROL ACCESS & LOCK
+        function checkPassword(e) {
             e.preventDefault();
-            const id = document.getElementById('event-id').value;
-            
-            const eventData = {
-                id: id || Date.now().toString(),
-                title: document.getElementById('event-title').value,
-                client: document.getElementById('event-client').value,
-                phone: document.getElementById('event-phone').value,
-                date: document.getElementById('event-date').value,
-                time: document.getElementById('event-time').value,
-                category: document.getElementById('event-category').value,
-                guests: parseInt(document.getElementById('event-guests').value) || 0,
-                status: document.getElementById('event-status').value,
-                notes: document.getElementById('event-notes').value
+            const pass = document.getElementById('login-pass').value;
+            if (pass === 'max78') {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-error').style.display = 'none';
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function lockApp() {
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+
+        // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
+        function checkMasterPass() {
+            const pass = prompt("🔐 Inserisci la Password Master per accedere:");
+            if (pass === MASTER_DELETE_PASS) {
+                return true;
+            } else {
+                if (pass !== null) alert("❌ Password errata! Accesso negato.");
+                return false;
+            }
+        }
+
+        // BACKUP & IMPORT
+        function exportBackup() {
+            const data = { bookings: getBookings(), events: getEvents(), exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_frantoio_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.bookings && db) {
+                        const bObj = {};
+                        data.bookings.forEach(b => { 
+                            const id = b.id || ('b_' + Date.now() + Math.random().toString(36).substr(2, 5));
+                            b.id = id;
+                            bObj[id] = b; 
+                        });
+                        db.ref('bookings').set(bObj);
+                    }
+                    if (data.events && db) {
+                        const eObj = {};
+                        data.events.forEach(ev => { 
+                            const id = ev.id || ('ev_' + Date.now() + Math.random().toString(36).substr(2, 5));
+                            ev.id = id;
+                            eObj[id] = ev; 
+                        });
+                        db.ref('events').set(eObj);
+                    }
+                    alert('Dati caricati e sincronizzati sul Cloud!');
+                } catch (err) {
+                    alert('Errore nel file di backup.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ROOMS CONFIG CON NUMERO MASSIMO TAVOLI PER SALA
+        const ROOMS = {
+            "Sala Esterna": 18,
+            "Sala 1": 15,
+            "Sala 2": 12,
+            "Sala Vetrata": 10,
+            "Sala Privée": 9
+        };
+
+        let currentActiveTab = "Sala Esterna";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('current-date');
+            dateInput.value = today;
+            dateInput.min = today; // BLOCCO DATE RETROATTIVE IN APPLICAZIONE
+
+            setupRoomSelects();
+            renderView();
+
+            const tabsWrapper = document.getElementById('tabs-wrapper');
+            tabsWrapper.addEventListener('wheel', (evt) => {
+                if (evt.deltaY !== 0) {
+                    evt.preventDefault();
+                    tabsWrapper.scrollLeft += evt.deltaY;
+                }
+            }, { passive: false });
+        });
+
+        function validateDateAndRender() {
+            const dateInput = document.getElementById('current-date');
+            const today = new Date().toISOString().split('T')[0];
+            if (dateInput.value < today) {
+                alert("⚠️ Non è possibile selezionare una data passata!");
+                dateInput.value = today;
+            }
+            renderView();
+        }
+
+        function setupRoomSelects() {
+            const evRoom = document.getElementById('ev-room');
+            if(!evRoom) return;
+            evRoom.innerHTML = '';
+            Object.keys(ROOMS).forEach(r => { evRoom.innerHTML += `<option value="${r}">${r}</option>`; });
+        }
+
+        function renderTabs() {
+            const wrapper = document.getElementById('tabs-wrapper');
+            wrapper.innerHTML = '';
+
+            Object.keys(ROOMS).forEach(r => {
+                const btn = document.createElement('button');
+                btn.className = `tab-pill ${r === currentActiveTab ? 'active' : ''}`;
+                btn.innerText = `${r} (${ROOMS[r]})`;
+                btn.onclick = () => { currentActiveTab = r; renderView(); };
+                wrapper.appendChild(btn);
+            });
+
+            const evBtn = document.createElement('button');
+            evBtn.className = `tab-pill event-tab ${currentActiveTab === 'EVENTI' ? 'active' : ''}`;
+            evBtn.innerText = `🎉 Eventi & Festeggiamenti`;
+            evBtn.onclick = () => { currentActiveTab = 'EVENTI'; renderView(); };
+            wrapper.appendChild(evBtn);
+        }
+
+        function renderView() {
+            renderTabs();
+            const mainView = document.getElementById('main-view');
+            mainView.innerHTML = '';
+
+            if (currentActiveTab === 'EVENTI') {
+                renderEventsView(mainView);
+            } else {
+                renderTablesView(mainView);
+            }
+        }
+
+        // FUNZIONE PER ESTRARRE I TAVOLI DIGITATI DALL'UTENTE
+        function getEventTables(ev, roomName) {
+            if (ev.room !== roomName) return [];
+            const totalTables = ROOMS[roomName] || 20;
+            const str = (ev.tables || '').trim();
+            if (!str || str.toLowerCase().includes('tutt')) {
+                let arr = [];
+                for (let i = 1; i <= totalTables; i++) arr.push(i);
+                return arr;
+            }
+            let set = new Set();
+            let parts = str.split(/[,;\s]+/);
+            parts.forEach(p => {
+                if (p.includes('-')) {
+                    let range = p.split('-').map(n => parseInt(n.trim()));
+                    if (range.length === 2 && !isNaN(range[0]) && !isNaN(range[1])) {
+                        for (let i = Math.min(range[0], range[1]); i <= Math.max(range[0], range[1]); i++) {
+                            set.add(i);
+                        }
+                    }
+                } else {
+                    let num = parseInt(p);
+                    if (!isNaN(num)) set.add(num);
+                }
+            });
+            return Array.from(set).sort((a, b) => a - b);
+        }
+
+        function isShiftOverlap(shift1, shift2) {
+            if (!shift1 || !shift2) return true;
+            if (shift1 === 'Tutto il giorno' || shift2 === 'Tutto il giorno') return true;
+            return shift1 === shift2;
+        }
+
+        // CONTROLLO DISPONIBILITA' E ESISTENZA TAVOLI IN TEMPO REALE
+        function checkEventTablesAvailability() {
+            const evId = document.getElementById('ev-id').value;
+            const evDate = document.getElementById('ev-date').value;
+            const evShift = document.getElementById('ev-shift').value;
+            const evRoom = document.getElementById('ev-room').value;
+            const evTablesStr = document.getElementById('ev-tables').value;
+            const warningEl = document.getElementById('ev-tables-warning');
+            const submitBtn = document.getElementById('ev-submit-btn');
+
+            if (!warningEl) return;
+
+            if (!evDate) {
+                warningEl.innerHTML = '';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            const maxTablesInRoom = ROOMS[evRoom] || 0;
+            const tempEv = { room: evRoom, tables: evTablesStr };
+            const requestedTables = getEventTables(tempEv, evRoom);
+
+            // 0. Controllo TAVOLI INESISTENTI nella sala selezionata
+            if (evTablesStr.trim() !== '') {
+                const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
+                if (invalidTables.length > 0) {
+                    warningEl.style.color = '#ef4444';
+                    warningEl.innerHTML = `❌ TAVOLO NON ESISTENTE: I tavoli [${invalidTables.join(', ')}] non esistono in ${evRoom} (Max ${maxTablesInRoom} tavoli)!`;
+                    if (submitBtn) submitBtn.disabled = true;
+                    return;
+                }
+            }
+
+            // 1. Controllo Conflitti con Prenotazioni Tavoli Standard
+            const conflictBooking = getBookings().find(b => {
+                if (b.date !== evDate) return false;
+                if (!isShiftOverlap(b.shift, evShift)) return false;
+                if (b.room !== evRoom) return false;
+                return requestedTables.includes(parseInt(b.table));
+            });
+
+            if (conflictBooking) {
+                warningEl.style.color = '#ef4444';
+                warningEl.innerHTML = `❌ IMMOGIBILE: Tavolo ${conflictBooking.table} in ${evRoom} è già occupato da "${conflictBooking.name}" (${conflictBooking.shift})!`;
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            }
+
+            // 2. Controllo Conflitti con Altri Eventi
+            const conflictEvent = getEvents().find(ev => {
+                if (ev.id === evId) return false; // Esclude se stesso se in modifica
+                if (ev.date !== evDate) return false;
+                if (!isShiftOverlap(ev.shift, evShift)) return false;
+                if (ev.room !== evRoom) return false;
+                const existingEvTbls = getEventTables(ev, evRoom);
+                return requestedTables.some(t => existingEvTbls.includes(t));
+            });
+
+            if (conflictEvent) {
+                warningEl.style.color = '#ef4444';
+                warningEl.innerHTML = `❌ IMMOGIBILE: La sala/tavoli in ${evRoom} sono già occupati dall'evento "${conflictEvent.name}" (${conflictEvent.shift})!`;
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            }
+
+            // Esito positivo: tutti i tavoli selezionati o la sala sono disponibili ed esistenti
+            warningEl.style.color = '#22c55e';
+            if (evTablesStr.trim() !== '') {
+                warningEl.innerHTML = `🟢 OK: Tavoli ${requestedTables.join(', ')} disponibili in ${evRoom}!`;
+            } else {
+                warningEl.innerHTML = `🟢 OK: Intera sala ${evRoom} disponibile!`;
+            }
+            if (submitBtn) submitBtn.disabled = false;
+        }
+
+        // RENDERIZZA TABELLA TAVOLI (MONITORA SIA PRENOTAZIONI CHE EVENTI)
+        function renderTablesView(container) {
+            const curDate = document.getElementById('current-date').value;
+            const curShift = document.getElementById('current-shift').value;
+            const bookings = getBookings();
+            const events = getEvents();
+
+            const totalTables = ROOMS[currentActiveTab];
+            let occCount = 0;
+
+            let gridHtml = '';
+            for (let i = 1; i <= totalTables; i++) {
+                // Controllo Prenotazione Tradizionale
+                const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && parseInt(item.table) === i);
+                
+                // Controllo Riservazione da Evento
+                const ev = events.find(item => {
+                    if (item.date !== curDate) return false;
+                    if (!isShiftOverlap(item.shift, curShift)) return false;
+                    const evTbls = getEventTables(item, currentActiveTab);
+                    return evTbls.includes(i);
+                });
+
+                if (b) {
+                    occCount++;
+                    gridHtml += `
+                        <div class="table-card occupied" onclick="handleTableClick(${i}, 'booking', '${b.id}')">
+                            <div class="t-occ-badge">OCC.</div>
+                            <div class="t-num">${i}</div>
+                            <div class="t-name">${b.name}</div>
+                        </div>
+                    `;
+                } else if (ev) {
+                    occCount++;
+                    gridHtml += `
+                        <div class="table-card event-occupied" onclick="handleTableClick(${i}, 'event', '${ev.id}')">
+                            <div class="t-ev-badge">🎉 EVENTO</div>
+                            <div class="t-num">${i}</div>
+                            <div class="t-name">${ev.name}</div>
+                        </div>
+                    `;
+                } else {
+                    gridHtml += `
+                        <div class="table-card free" onclick="handleTableClick(${i}, 'free', null)">
+                            <div class="t-num">${i}</div>
+                            <div class="t-status">LIBERO</div>
+                        </div>
+                    `;
+                }
+            }
+
+            const freeCount = totalTables - occCount;
+
+            container.innerHTML = `
+                <div class="sec-header">
+                    <div class="sec-title">${currentActiveTab}</div>
+                    <div class="counters">
+                        <span class="c-free">🟢 Liberi: ${freeCount}</span>
+                        <span class="c-occ">🔴 Occupati: ${occCount}</span>
+                    </div>
+                </div>
+                <div class="tables-grid">${gridHtml}</div>
+            `;
+        }
+
+        // GESTIONE CLIC SUI TAVOLI
+        function handleTableClick(tableNum, statusType, id) {
+            if (statusType === 'booking') {
+                if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
+                    if (checkMasterPass()) { // Password Master "nikita78"
+                        if (id && db) {
+                            db.ref('bookings/' + id).remove();
+                        }
+                    }
+                }
+            } else if (statusType === 'event') {
+                alert(`ℹ️ Il Tavolo ${tableNum} è occupato per l'Evento/Festeggiamento.\nPer modifcarlo o gestirlo, vai nella scheda "🎉 Eventi & Festeggiamenti".`);
+            } else {
+                document.getElementById('booking-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${currentActiveTab}`;
+                document.getElementById('modal-table-num').value = tableNum;
+                document.getElementById('b-name').value = '';
+                document.getElementById('b-guests').value = '2';
+                document.getElementById('b-phone').value = '';
+                document.getElementById('b-notes').value = '';
+                openModal('booking-modal');
+            }
+        }
+
+        // SALVA PRENOTAZIONE TAVOLO
+        function saveBooking(e) {
+            e.preventDefault();
+            const selectedDate = document.getElementById('current-date').value;
+            const selectedShift = document.getElementById('current-shift').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (selectedDate < today) {
+                alert("⚠️ Errore: Non puoi inserire una prenotazione con data passata!");
+                return;
+            }
+
+            const tableNum = parseInt(document.getElementById('modal-table-num').value);
+
+            // Controllo Accavallamento Prenotazione Tradizionale
+            const existingB = getBookings().find(b => b.date === selectedDate && b.shift === selectedShift && b.room === currentActiveTab && parseInt(b.table) === tableNum);
+            if (existingB) {
+                alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già prenotato da "${existingB.name}"!`);
+                return;
+            }
+
+            // Controllo Accavallamento Eventi
+            const existingEv = getEvents().find(ev => {
+                if (ev.date !== selectedDate) return false;
+                if (!isShiftOverlap(ev.shift, selectedShift)) return false;
+                const evTbls = getEventTables(ev, currentActiveTab);
+                return evTbls.includes(tableNum);
+            });
+
+            if (existingEv) {
+                alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già riservato per l'evento "${existingEv.name}"!`);
+                return;
+            }
+
+            const bookingId = 'b_' + Date.now();
+            const newBooking = {
+                id: bookingId,
+                date: selectedDate,
+                shift: selectedShift,
+                room: currentActiveTab,
+                table: tableNum,
+                name: document.getElementById('b-name').value,
+                guests: document.getElementById('b-guests').value,
+                phone: document.getElementById('b-phone').value,
+                notes: document.getElementById('b-notes').value
             };
 
-            if (id) {
-                const index = events.findIndex(item => item.id === id);
-                if (index !== -1) events[index] = eventData;
-            } else {
-                events.push(eventData);
+            if (db) {
+                db.ref('bookings/' + bookingId).set(newBooking);
             }
-
-            saveToStorage();
-            renderEvents();
-            closeModal();
+            closeModal('booking-modal');
         }
 
-        // Modifica Evento
-        function editEvent(id) {
-            const ev = events.find(item => item.id === id);
+        // VISUALIZZAZIONE SCHEDE EVENTI
+        function renderEventsView(container) {
+            let events = getEvents();
+            events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            let eventsListHtml = '';
+            if (events.length === 0) {
+                eventsListHtml = `<div class="empty-box">Nessun evento registrato.</div>`;
+            } else {
+                events.forEach(e => {
+                    const adultsCount = parseInt(e.adults) || 0;
+                    const childrenCount = parseInt(e.children) || 0;
+                    const totalGuests = adultsCount + childrenCount;
+                    const formattedDate = e.date ? e.date.split('-').reverse().join('/') : 'Non specificata';
+
+                    eventsListHtml += `
+                        <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:12px; position:relative;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px; flex-wrap:wrap; gap:6px;">
+                                <div>
+                                    <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
+                                    <div style="font-size:12px; font-weight:800; color:#f59e0b; margin-top:2px;">📅 Data Evento: ${formattedDate} (${e.shift || 'Cena'})</div>
+                                </div>
+                                <div style="display:flex; gap:6px;">
+                                    <button style="background:#22c55e22; color:#22c55e; border:1px solid #22c55e; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="printSingleEvent('${e.id}')">🖨️ Stampa</button>
+                                    <button style="background:#3b82f622; color:#3b82f6; border:1px solid #3b82f6; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="openEventModal('${e.id}')">✏️ Modifica</button>
+                                    <button style="background:#ef444422; color:#ef4444; border:1px solid #ef4444; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="deleteEvent('${e.id}')">🗑️ Elimina</button>
+                                </div>
+                            </div>
+                            
+                            <div style="font-size:12px; color:#d4d4d8; margin-bottom:6px; line-height:1.4;">
+                                📍 <b>Sala:</b> ${e.room} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : '| 🪑 <b>Intera Sala Riservata</b>'}<br>
+                                👥 <b>Ospiti:</b> ${totalGuests} Tot. (${adultsCount} Adulti + ${childrenCount} Bimbi) ${e.phone ? '| 📞 ' + e.phone : ''} ${e.outTime ? '| ⏰ Uscita: ' + e.outTime : ''}
+                            </div>
+
+                            <div style="background:#27272a; border-radius:6px; padding:8px; margin-top:8px; font-size:11px; color:#e4e4e7; display:flex; flex-direction:column; gap:4px;">
+                                <div style="font-weight:700; color:#f59e0b; font-size:11px; margin-bottom:2px;">🍽️ Menu Adulti:</div>
+                                ${e.welcome ? `<div>🥂 <b>Benvenuto:</b> ${e.welcome}</div>` : ''}
+                                ${e.starter ? `<div>🥗 <b>Antipasto:</b> ${e.starter}</div>` : ''}
+                                ${e.first ? `<div>🍝 <b>Primi:</b> ${e.first}</div>` : ''}
+                                ${e.second ? `<div>🍖 <b>Secondi:</b> ${e.second}</div>` : ''}
+                                ${e.dessert ? `<div>🍰 <b>Dolce / Torta:</b> ${e.dessert}</div>` : ''}
+                                ${(!e.welcome && !e.starter && !e.first && !e.second && !e.dessert) ? `<div style="color:#71717a; font-style:italic;">Nessuna portata adulti specificata</div>` : ''}
+                            </div>
+
+                            ${(childrenCount > 0 || e.childMenu) ? `
+                                <div style="background:#1e293b; border:1px solid #3b82f6; border-radius:6px; padding:8px; margin-top:6px; font-size:11px; color:#e2e8f0;">
+                                    <div style="font-weight:700; color:#3b82f6; font-size:11px; margin-bottom:2px;">🎈 Menu Bimbi (${childrenCount} Bambini):</div>
+                                    <div>${e.childMenu || 'Menu bimbi standard'}</div>
+                                </div>
+                            ` : ''}
+
+                            ${(e.decor || e.music || e.notes) ? `
+                                <div style="background:#18181b; border:1px solid #27272a; border-radius:6px; padding:6px 8px; margin-top:6px; font-size:11px; color:#a1a1aa;">
+                                    ${e.decor ? `<div>🎨 <b>Addobbi/Tovaglia:</b> ${e.decor}</div>` : ''}
+                                    ${e.music ? `<div>🎵 <b>Musica/SIAE:</b> ${e.music}</div>` : ''}
+                                    ${e.notes ? `<div style="color:#ef4444;">⚠️ <b>Note/Allergie:</b> ${e.notes}</div>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = `
+                <div class="sec-header">
+                    <div class="sec-title">🎉 Gestione Eventi & Festeggiamenti</div>
+                    <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openEventModal()">+ Nuovo Evento</button>
+                </div>
+                <div>${eventsListHtml}</div>
+            `;
+        }
+
+        // STAMPA SINGOLO EVENTO
+        function printSingleEvent(eventId) {
+            const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
 
-            document.getElementById('event-id').value = ev.id;
-            document.getElementById('event-title').value = ev.title;
-            document.getElementById('event-client').value = ev.client;
-            document.getElementById('event-phone').value = ev.phone || '';
-            document.getElementById('event-date').value = ev.date;
-            document.getElementById('event-time').value = ev.time;
-            document.getElementById('event-category').value = ev.category;
-            document.getElementById('event-guests').value = ev.guests;
-            document.getElementById('event-status').value = ev.status;
-            document.getElementById('event-notes').value = ev.notes || '';
+            const adultsCount = parseInt(ev.adults) || 0;
+            const childrenCount = parseInt(ev.children) || 0;
+            const totalGuests = adultsCount + childrenCount;
+            const formattedDate = ev.date ? ev.date.split('-').reverse().join('/') : 'Non specificata';
 
-            document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-indigo-400"></i> Modifica Evento`;
-            openModal(true);
+            let menuAdultiList = [];
+            if(ev.welcome) menuAdultiList.push('<b>🥂 Benvenuto:</b> ' + ev.welcome);
+            if(ev.starter) menuAdultiList.push('<b>🥗 Antipasto:</b> ' + ev.starter);
+            if(ev.first) menuAdultiList.push('<b>🍝 Primi:</b> ' + ev.first);
+            if(ev.second) menuAdultiList.push('<b>🍖 Secondi:</b> ' + ev.second);
+            if(ev.dessert) menuAdultiList.push('<b>🍰 Dolce / Torta:</b> ' + ev.dessert);
+
+            let printWin = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Scheda Evento - ${ev.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+                        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+                        .header p { margin: 4px 0 0 0; font-size: 13px; color: #555; }
+                        .box { border: 1px solid #000; padding: 10px 14px; margin-bottom: 12px; border-radius: 4px; }
+                        .box-title { font-size: 13px; font-weight: bold; background: #eee; padding: 4px 8px; border-bottom: 1px solid #000; margin: -10px -14px 10px -14px; text-transform: uppercase; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+                        .row div { flex: 1; }
+                        .menu-item { font-size: 13px; margin-bottom: 4px; }
+                        .totali-box { font-size: 14px; background: #f9f9f9; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px; }
+                        .footer { text-align: center; font-size: 11px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
+                        @media print { @page { margin: 1.5cm; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🌿 Vecchio Frantoio</h1>
+                        <p>Scheda Dettaglio Evento & Festeggiamento</p>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">📋 Dati Cliente & Evento</div>
+                        <div class="row">
+                            <div><b>Data Evento:</b> <span style="font-size:15px; font-weight:bold;">${formattedDate} (${ev.shift || 'Cena'})</span></div>
+                            <div><b>Tipologia Evento:</b> ${ev.type}</div>
+                        </div>
+                        <div class="row" style="margin-top:5px;">
+                            <div><b>Cliente / Festeggiato:</b> ${ev.name}</div>
+                            <div><b>Telefono:</b> ${ev.phone || '-'}</div>
+                        </div>
+                        <div class="row" style="margin-top:5px;">
+                            <div><b>Orario Uscita Previsto:</b> ${ev.outTime || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">📍 Sala & Ospiti</div>
+                        <div class="row">
+                            <div><b>Sala Riservata:</b> ${ev.room}</div>
+                            <div><b>Tavoli Riservati:</b> ${ev.tables || 'Intera Sala'}</div>
+                        </div>
+                        <div class="row">
+                            <div><b>Totale Ospiti:</b> ${totalGuests} Totali (${adultsCount} Adulti + ${childrenCount} Bambini)</div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <div class="box-title">🍽️ Menu Adulti</div>
+                        ${menuAdultiList.length > 0 ? menuAdultiList.map(m => `<div class="menu-item">${m}</div>`).join('') : '<div class="menu-item"><i>Nessuna portata specificata</i></div>'}
+                    </div>
+
+                    ${(childrenCount > 0 || ev.childMenu) ? `
+                    <div class="box">
+                        <div class="box-title">🎈 Menu Bimbi (${childrenCount} Bambini)</div>
+                        <div class="menu-item">${ev.childMenu || 'Menu bimbi standard'}</div>
+                    </div>
+                    ` : ''}
+
+                    ${(ev.decor || ev.music || ev.notes) ? `
+                    <div class="box">
+                        <div class="box-title">🎨 Extra & Note Speciali</div>
+                        ${ev.decor ? `<div class="menu-item"><b>Addobbi / Tovaglia:</b> ${ev.decor}</div>` : ''}
+                        ${ev.music ? `<div class="menu-item"><b>Musica / SIAE:</b> ${ev.music}</div>` : ''}
+                        ${ev.notes ? `<div class="menu-item" style="color:#c00;"><b>⚠️ Intolleranze / Allergie / Note:</b> ${ev.notes}</div>` : ''}
+                    </div>
+                    ` : ''}
+
+                    <div class="box">
+                        <div class="box-title">💶 Preventivo Economico & Calcoli</div>
+                        <div class="row">
+                            <div><b>Prezzo Adulti:</b> ${ev.priceAdult ? ev.priceAdult + ' € / pers' : '-'}</div>
+                            <div><b>Prezzo Bimbi:</b> ${ev.priceChild ? ev.priceChild + ' € / pers' : '-'}</div>
+                        </div>
+                        <div class="totali-box">
+                            <div class="row">
+                                <div><b>Acconto Versato:</b> ${ev.deposit ? ev.deposit + ' €' : '0 €'}</div>
+                                <div><b style="font-size:15px;">TOTALE EVENTO: ${ev.priceTotal ? ev.priceTotal + ' €' : '0 €'}</b></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        Documento generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
+                    </div>
+
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWin.document.write(html);
+            printWin.document.close();
         }
 
-        // Elimina Evento
-        function deleteEvent(id) {
-            if (confirm("Sei sicuro di voler eliminare questo evento?")) {
-                events = events.filter(item => item.id !== id);
-                saveToStorage();
-                renderEvents();
+        function calcEventTotal() {
+            const adults = parseFloat(document.getElementById('ev-adults').value) || 0;
+            const children = parseFloat(document.getElementById('ev-children').value) || 0;
+            const priceAdult = parseFloat(document.getElementById('ev-price-adult').value) || 0;
+            const priceChild = parseFloat(document.getElementById('ev-price-child').value) || 0;
+
+            const total = (adults * priceAdult) + (children * priceChild);
+            document.getElementById('ev-price-total').value = total > 0 ? total : 0;
+        }
+
+        // APERTURA MODALE EVENTO
+        function openEventModal(eventId = null) {
+            const titleEl = document.getElementById('event-modal-title');
+            const idInput = document.getElementById('ev-id');
+            const today = new Date().toISOString().split('T')[0];
+            const curAppDate = document.getElementById('current-date').value || today;
+
+            const evDateInput = document.getElementById('ev-date');
+            evDateInput.min = today; // Imposta il minimo alla data di oggi
+
+            if (eventId) {
+                const ev = getEvents().find(item => item.id === eventId);
+                if (ev) {
+                    idInput.value = ev.id;
+                    titleEl.innerText = '✏️ Modifica Evento';
+                    evDateInput.value = ev.date || curAppDate;
+                    document.getElementById('ev-shift').value = ev.shift || 'Cena';
+                    document.getElementById('ev-name').value = ev.name || '';
+                    document.getElementById('ev-phone').value = ev.phone || '';
+                    document.getElementById('ev-type').value = ev.type || 'Compleanno';
+                    document.getElementById('ev-room').value = ev.room || 'Sala Esterna';
+                    document.getElementById('ev-tables').value = ev.tables || '';
+                    document.getElementById('ev-adults').value = ev.adults !== undefined ? ev.adults : '20';
+                    document.getElementById('ev-children').value = ev.children !== undefined ? ev.children : '0';
+                    document.getElementById('ev-welcome').value = ev.welcome || '';
+                    document.getElementById('ev-starter').value = ev.starter || '';
+                    document.getElementById('ev-first').value = ev.first || '';
+                    document.getElementById('ev-second').value = ev.second || '';
+                    document.getElementById('ev-dessert').value = ev.dessert || '';
+                    document.getElementById('ev-child-menu').value = ev.childMenu || '';
+                    document.getElementById('ev-decor').value = ev.decor || '';
+                    document.getElementById('ev-music').value = ev.music || '';
+                    document.getElementById('ev-notes').value = ev.notes || '';
+                    document.getElementById('ev-price-adult').value = ev.priceAdult || '';
+                    document.getElementById('ev-price-child').value = ev.priceChild || '';
+                    document.getElementById('ev-price-total').value = ev.priceTotal || '';
+                    document.getElementById('ev-deposit').value = ev.deposit || '0';
+                    document.getElementById('ev-out-time').value = ev.outTime || '';
+                }
+            } else {
+                idInput.value = '';
+                titleEl.innerText = '🎉 Nuovo Preventivo & Evento';
+                evDateInput.value = curAppDate >= today ? curAppDate : today;
+                document.getElementById('ev-shift').value = document.getElementById('current-shift').value || 'Cena';
+                document.getElementById('ev-name').value = '';
+                document.getElementById('ev-phone').value = '';
+                document.getElementById('ev-type').value = 'Compleanno';
+                document.getElementById('ev-room').value = 'Sala Esterna';
+                document.getElementById('ev-tables').value = '';
+                document.getElementById('ev-adults').value = '20';
+                document.getElementById('ev-children').value = '5';
+                document.getElementById('ev-welcome').value = '';
+                document.getElementById('ev-starter').value = '';
+                document.getElementById('ev-first').value = '';
+                document.getElementById('ev-second').value = '';
+                document.getElementById('ev-dessert').value = '';
+                document.getElementById('ev-child-menu').value = '';
+                document.getElementById('ev-decor').value = '';
+                document.getElementById('ev-music').value = '';
+                document.getElementById('ev-notes').value = '';
+                document.getElementById('ev-price-adult').value = '';
+                document.getElementById('ev-price-child').value = '';
+                document.getElementById('ev-price-total').value = '';
+                document.getElementById('ev-deposit').value = '0';
+                document.getElementById('ev-out-time').value = '';
+            }
+            calcEventTotal();
+            checkEventTablesAvailability(); // Esegue il controllo immediato
+            openModal('event-modal');
+        }
+
+        // SALVATAGGIO EVENTO CON VERIFICA TAVOLI ESISTENTI E NON SOVRAPPOSTI
+        function saveEvent(e) {
+            e.preventDefault();
+            const existingId = document.getElementById('ev-id').value;
+            const evDate = document.getElementById('ev-date').value;
+            const evShift = document.getElementById('ev-shift').value;
+            const evRoom = document.getElementById('ev-room').value;
+            const evTablesStr = document.getElementById('ev-tables').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Blocco Date Passate
+            if (evDate < today) {
+                alert("⚠️ Errore: Non puoi creare o modificare un evento con una data passata!");
+                return;
+            }
+
+            // Calcolo tavoli richiesti
+            const maxTablesInRoom = ROOMS[evRoom] || 0;
+            const tempEv = { room: evRoom, tables: evTablesStr };
+            const requestedTables = getEventTables(tempEv, evRoom);
+
+            // 2. Blocco Tavoli Inesistenti nella Sala
+            if (evTablesStr.trim() !== '') {
+                const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
+                if (invalidTables.length > 0) {
+                    alert(`⚠️ Impossibile salvare! I tavoli [${invalidTables.join(', ')}] non esistono in ${evRoom} (questa sala ha al massimo ${maxTablesInRoom} tavoli).`);
+                    return;
+                }
+            }
+
+            // 3. Controllo Conflitti con Prenotazioni Tavoli Standard
+            const conflictBooking = getBookings().find(b => {
+                if (b.date !== evDate) return false;
+                if (!isShiftOverlap(b.shift, evShift)) return false;
+                if (b.room !== evRoom) return false;
+                return requestedTables.includes(parseInt(b.table));
+            });
+
+            if (conflictBooking) {
+                alert(`⚠️ Impossibile salvare l'evento! Il Tavolo ${conflictBooking.table} in ${evRoom} è già prenotato da "${conflictBooking.name}" per il servizio di ${conflictBooking.shift}.`);
+                return;
+            }
+
+            // 4. Controllo Conflitti con Altri Eventi
+            const conflictEvent = getEvents().find(ev => {
+                if (ev.id === existingId) return false; // Esclude se stesso in modifica
+                if (ev.date !== evDate) return false;
+                if (!isShiftOverlap(ev.shift, evShift)) return false;
+                if (ev.room !== evRoom) return false;
+                const existingEvTbls = getEventTables(ev, evRoom);
+                return requestedTables.some(t => existingEvTbls.includes(t));
+            });
+
+            if (conflictEvent) {
+                alert(`⚠️ Impossibile salvare l'evento! La sala ${evRoom} (o i tavoli richiesti) è già occupata dall'evento "${conflictEvent.name}".`);
+                return;
+            }
+
+            const eventId = existingId ? existingId : ('ev_' + Date.now());
+
+            const newEv = {
+                id: eventId,
+                date: evDate,
+                shift: evShift,
+                name: document.getElementById('ev-name').value,
+                phone: document.getElementById('ev-phone').value,
+                type: document.getElementById('ev-type').value,
+                room: evRoom,
+                tables: evTablesStr,
+                adults: document.getElementById('ev-adults').value,
+                children: document.getElementById('ev-children').value,
+                welcome: document.getElementById('ev-welcome').value,
+                starter: document.getElementById('ev-starter').value,
+                first: document.getElementById('ev-first').value,
+                second: document.getElementById('ev-second').value,
+                dessert: document.getElementById('ev-dessert').value,
+                childMenu: document.getElementById('ev-child-menu').value,
+                decor: document.getElementById('ev-decor').value,
+                music: document.getElementById('ev-music').value,
+                notes: document.getElementById('ev-notes').value,
+                priceAdult: document.getElementById('ev-price-adult').value,
+                priceChild: document.getElementById('ev-price-child').value,
+                priceTotal: document.getElementById('ev-price-total').value,
+                deposit: document.getElementById('ev-deposit').value,
+                outTime: document.getElementById('ev-out-time').value
+            };
+
+            if (db) {
+                db.ref('events/' + eventId).set(newEv);
+            }
+            closeModal('event-modal');
+        }
+
+        function deleteEvent(eventId) {
+            if (confirm('Vuoi eliminare questo evento?')) {
+                if (checkMasterPass()) { // Password Master "nikita78"
+                    if (db) {
+                        db.ref('events/' + eventId).remove();
+                    }
+                }
             }
         }
 
-        // Inizializzazione al caricamento
-        document.addEventListener('DOMContentLoaded', () => {
-            renderEvents();
-        });
+        // ==========================================
+        // FILTRI STAMPA & STORICO COMPLETO
+        // ==========================================
+        function openPrintModal() {
+            if (checkMasterPass()) { // PIN "nikita78"
+                document.getElementById('pr-date-start').value = '';
+                document.getElementById('pr-date-end').value = '';
+                document.getElementById('pr-room').value = 'ALL';
+                document.getElementById('pr-event-type').value = 'ALL';
+                document.getElementById('pr-include').value = 'BOTH';
+                openModal('print-modal');
+            }
+        }
+
+        function executeFilteredPrint(e) {
+            e.preventDefault();
+
+            const dStart = document.getElementById('pr-date-start').value;
+            const dEnd = document.getElementById('pr-date-end').value;
+            const selRoom = document.getElementById('pr-room').value;
+            const selEventType = document.getElementById('pr-event-type').value;
+            const incType = document.getElementById('pr-include').value;
+
+            let bookings = getBookings();
+            let events = getEvents();
+
+            // Filtri prenotazioni tavoli
+            if (dStart) bookings = bookings.filter(b => b.date >= dStart);
+            if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
+            if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
+
+            bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            // Filtri eventi (incluse date)
+            if (dStart) events = events.filter(ev => ev.date >= dStart);
+            if (dEnd) events = events.filter(ev => ev.date <= dEnd);
+            if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
+            if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
+
+            events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            // Calcolo Totali
+            const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
+            const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.adults) || 0) + (parseInt(ev.children) || 0), 0);
+            const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
+
+            let periodText = "Tutto lo Storico";
+            if (dStart && dEnd) periodText = `Dal ${dStart.split('-').reverse().join('/')} al ${dEnd.split('-').reverse().join('/')}`;
+            else if (dStart) periodText = `Dal ${dStart.split('-').reverse().join('/')}`;
+            else if (dEnd) periodText = `Fino al ${dEnd.split('-').reverse().join('/')}`;
+
+            let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
+            let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
+
+            let printWin = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Report & Storico Completo - Vecchio Frantoio</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; }
+                        .filter-info { font-size: 11px; background: #f1f5f9; padding: 8px 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
+                        h2 { font-size: 15px; margin-top: 20px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
+                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
+                        .stat-item { font-size: 11px; font-weight: bold; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        th, td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; font-size: 11px; vertical-align: top; }
+                        th { background: #f1f5f9; font-weight: bold; }
+                        .footer { font-size: 10px; color: #64748b; margin-top: 30px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+                        @media print {
+                            @page { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>🌿 Vecchio Frantoio - Report Completo Eventi & Prenotazioni</h1>
+                    
+                    <div class="filter-info">
+                        <b>📌 Filtri Applicati:</b><br>
+                        • Periodo: <b>${periodText}</b> (Include Date Retroattive)<br>
+                        • Sala: <b>${roomText}</b> | Tipologia Evento: <b>${eventTypeText}</b>
+                    </div>
+
+                    <div class="stats-box">
+                        ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
+                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
+                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Previsto Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
+                    </div>
+            `;
+
+            if (incType === 'BOTH' || incType === 'BOOKINGS') {
+                html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
+                if (bookings.length === 0) {
+                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata.</p>`;
+                } else {
+                    html += `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Servizio</th>
+                                    <th>Sala</th>
+                                    <th>Tav.</th>
+                                    <th>Cliente</th>
+                                    <th>Coperti</th>
+                                    <th>Telefono</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    bookings.forEach(b => {
+                        const bDate = b.date ? b.date.split('-').reverse().join('/') : '-';
+                        html += `
+                            <tr>
+                                <td><b>${bDate}</b></td>
+                                <td>${b.shift || '-'}</td>
+                                <td>${b.room || '-'}</td>
+                                <td>${b.table || '-'}</td>
+                                <td><b>${b.name || '-'}</b></td>
+                                <td>${b.guests || '1'}</td>
+                                <td>${b.phone || '-'}</td>
+                                <td>${b.notes || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table>`;
+                }
+            }
+
+            if (incType === 'BOTH' || incType === 'EVENTS') {
+                html += `<h2>🎉 Dettaglio Completo Eventi & Festeggiamenti (${events.length})</h2>`;
+                if (events.length === 0) {
+                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato.</p>`;
+                } else {
+                    html += `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data Evento</th>
+                                    <th>Cliente / Evento</th>
+                                    <th>Sala & Tavoli</th>
+                                    <th>Ospiti (Adulti/Bimbi)</th>
+                                    <th>Menu Adulti</th>
+                                    <th>Menu Bimbi</th>
+                                    <th>Extra & Allergie</th>
+                                    <th>Prezzi €/Persona</th>
+                                    <th>Acconto</th>
+                                    <th>Totale (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    events.forEach(ev => {
+                        const evDate = ev.date ? ev.date.split('-').reverse().join('/') : '-';
+                        let menuAdultiStr = [];
+                        if(ev.welcome) menuAdultiStr.push('• Benvenuto: ' + ev.welcome);
+                        if(ev.starter) menuAdultiStr.push('• Antipasto: ' + ev.starter);
+                        if(ev.first) menuAdultiStr.push('• Primi: ' + ev.first);
+                        if(ev.second) menuAdultiStr.push('• Secondi: ' + ev.second);
+                        if(ev.dessert) menuAdultiStr.push('• Dolce/Torta: ' + ev.dessert);
+
+                        let extraStr = [];
+                        if(ev.decor) extraStr.push('Addobbi: ' + ev.decor);
+                        if(ev.music) extraStr.push('Musica: ' + ev.music);
+                        if(ev.notes) extraStr.push('Note/Allergie: ' + ev.notes);
+
+                        const nAdults = parseInt(ev.adults) || 0;
+                        const nChildren = parseInt(ev.children) || 0;
+                        const pAdult = ev.priceAdult ? ev.priceAdult + ' €' : '-';
+                        const pChild = ev.priceChild ? ev.priceChild + ' €' : '-';
+
+                        html += `
+                            <tr>
+                                <td><b>${evDate}</b> (${ev.shift || 'Cena'})</td>
+                                <td><b>${ev.name}</b><br><small>Tipo: ${ev.type}</small><br><small>Tel: ${ev.phone || '-'}</small></td>
+                                <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : '(Intera Sala)'}</td>
+                                <td><b>${nAdults + nChildren} Tot.</b><br>(${nAdults} Adulti + ${nChildren} Bimbi)</td>
+                                <td>${menuAdultiStr.join('<br>') || '-'}</td>
+                                <td>${ev.childMenu || '-'}</td>
+                                <td>${extraStr.join('<br>') || '-'}</td>
+                                <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
+                                <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
+                                <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table>`;
+                }
+            }
+
+            html += `
+                    <div class="footer">
+                        Documento riservato e protetto generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            closeModal('print-modal');
+            printWin.document.write(html);
+            printWin.document.close();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     </script>
 </body>
 </html>
