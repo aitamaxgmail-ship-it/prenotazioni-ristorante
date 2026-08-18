@@ -79,7 +79,8 @@
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
         .btn-gold { background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
-        .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
+        .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+        .btn-purple:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-cancel { background: #27272a; color: #e4e4e7; font-weight: 600; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 6px; }
 
         .sec-banner { background: #27272a; border-left: 3px solid #f59e0b; padding: 5px 8px; font-weight: 700; font-size: 12px; color: #f59e0b; margin: 12px 0 8px 0; }
@@ -235,11 +236,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Data Evento</label>
-                        <input type="date" id="ev-date" onclick="this.showPicker && this.showPicker()" required>
+                        <input type="date" id="ev-date" onclick="this.showPicker && this.showPicker()" onchange="checkEventTablesAvailability()" required>
                     </div>
                     <div class="form-group">
                         <label>Servizio</label>
-                        <select id="ev-shift">
+                        <select id="ev-shift" onchange="checkEventTablesAvailability()">
                             <option value="Cena">Cena</option>
                             <option value="Pranzo">Pranzo</option>
                             <option value="Tutto il giorno">Tutto il giorno</option>
@@ -271,13 +272,15 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Sala Riservata</label>
-                        <select id="ev-room"></select>
+                        <select id="ev-room" onchange="checkEventTablesAvailability()"></select>
                     </div>
                     <div class="form-group">
                         <label>Tavoli (Vuoto = Tutta la Sala)</label>
-                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3 o lascia vuoto">
+                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3 o lascia vuoto" oninput="checkEventTablesAvailability()">
                     </div>
                 </div>
+                <div id="ev-tables-warning" style="font-size:11px; font-weight:700; margin-bottom:10px; min-height:16px;"></div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>N° Adulti</label>
@@ -359,7 +362,7 @@
                     <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
                 </div>
 
-                <button type="submit" class="btn-purple">💾 Salva Evento / Modifiche</button>
+                <button type="submit" id="ev-submit-btn" class="btn-purple">💾 Salva Evento / Modifiche</button>
                 <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
             </form>
         </div>
@@ -594,6 +597,69 @@
             if (!shift1 || !shift2) return true;
             if (shift1 === 'Tutto il giorno' || shift2 === 'Tutto il giorno') return true;
             return shift1 === shift2;
+        }
+
+        // CONTROLLO DISPONIBILITA' TAVOLI IN TEMPO REALE DURANTE LA COMPILAZIONE DELL'EVENTO
+        function checkEventTablesAvailability() {
+            const evId = document.getElementById('ev-id').value;
+            const evDate = document.getElementById('ev-date').value;
+            const evShift = document.getElementById('ev-shift').value;
+            const evRoom = document.getElementById('ev-room').value;
+            const evTablesStr = document.getElementById('ev-tables').value;
+            const warningEl = document.getElementById('ev-tables-warning');
+            const submitBtn = document.getElementById('ev-submit-btn');
+
+            if (!warningEl) return;
+
+            if (!evDate) {
+                warningEl.innerHTML = '';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            const tempEv = { room: evRoom, tables: evTablesStr };
+            const requestedTables = getEventTables(tempEv, evRoom);
+
+            // 1. Controllo Conflitti con Prenotazioni Tavoli Standard
+            const conflictBooking = getBookings().find(b => {
+                if (b.date !== evDate) return false;
+                if (!isShiftOverlap(b.shift, evShift)) return false;
+                if (b.room !== evRoom) return false;
+                return requestedTables.includes(parseInt(b.table));
+            });
+
+            if (conflictBooking) {
+                warningEl.style.color = '#ef4444';
+                warningEl.innerHTML = `❌ IMMOGIBILE: Tavolo ${conflictBooking.table} in ${evRoom} è già occupato da "${conflictBooking.name}" (${conflictBooking.shift})!`;
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            }
+
+            // 2. Controllo Conflitti con Altri Eventi
+            const conflictEvent = getEvents().find(ev => {
+                if (ev.id === evId) return false; // Esclude se stesso se in modifica
+                if (ev.date !== evDate) return false;
+                if (!isShiftOverlap(ev.shift, evShift)) return false;
+                if (ev.room !== evRoom) return false;
+                const existingEvTbls = getEventTables(ev, evRoom);
+                return requestedTables.some(t => existingEvTbls.includes(t));
+            });
+
+            if (conflictEvent) {
+                warningEl.style.color = '#ef4444';
+                warningEl.innerHTML = `❌ IMMOGIBILE: La sala/tavoli in ${evRoom} sono già occupati dall'evento "${conflictEvent.name}" (${conflictEvent.shift})!`;
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            }
+
+            // Esito positivo: tutti i tavoli selezionati o la sala sono disponibili
+            warningEl.style.color = '#22c55e';
+            if (evTablesStr.trim() !== '') {
+                warningEl.innerHTML = `🟢 OK: Tavoli ${requestedTables.join(', ')} disponibili in ${evRoom}!`;
+            } else {
+                warningEl.innerHTML = `🟢 OK: Intera sala ${evRoom} disponibile!`;
+            }
+            if (submitBtn) submitBtn.disabled = false;
         }
 
         // RENDERIZZA TABELLA TAVOLI (MONITORA SIA PRENOTAZIONI CHE EVENTI)
@@ -1006,6 +1072,7 @@
                 document.getElementById('ev-out-time').value = '';
             }
             calcEventTotal();
+            checkEventTablesAvailability(); // Esegue il controllo immediato
             openModal('event-modal');
         }
 
