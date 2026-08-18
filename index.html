@@ -942,11 +942,13 @@
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
 
-            // Richiesta opzionale per mostrare i prezzi
+            // Scelta utente: Stampare con o senza prezzi
             let showPrices = false;
-            const wantPrices = confirm("Vuoi includere il Preventivo Economico, i Prezzi e il Totale nella stampa?");
+            const wantPrices = confirm("Vuoi includere il Preventivo Economico, i Prezzi e il Totale nella stampa?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
+            
             if (wantPrices) {
-                showPrices = checkMasterPass("🔐 Inserisci la Password Supervisore (nikita78) per mostrare i prezzi:");
+                // Se sceglie SÌ, richiede la password senza mostrarla nel testo
+                showPrices = checkMasterPass("🔐 Inserisci la Password Supervisore per mostrare i prezzi:");
                 if (!showPrices) {
                     alert("⚠️ Password errata o annullata! La scheda verrà generata SENZA i prezzi.");
                 }
@@ -1265,6 +1267,17 @@
         function executeFilteredPrint(e) {
             e.preventDefault();
 
+            // Scelta utente: Stampare il report con o senza prezzi
+            let showPrices = false;
+            const wantPrices = confirm("Vuoi includere i Prezzi e gli Incassi nel Report finale?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
+            
+            if (wantPrices) {
+                showPrices = checkMasterPass("🔐 Inserisci la Password Supervisore per mostrare i prezzi:");
+                if (!showPrices) {
+                    alert("⚠️ Password errata o annullata! Il Report verrà generato SENZA i prezzi.");
+                }
+            }
+
             const dStart = document.getElementById('pr-date-start').value;
             const dEnd = document.getElementById('pr-date-end').value;
             const selRoom = document.getElementById('pr-room').value;
@@ -1333,7 +1346,7 @@
                     <div class="stats-box">
                         ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
                         ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
-                        ${incType !== 'BOOKINGS' ? `<div class="stat-item">💶 Incasso Totale Previsto Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
+                        ${(incType !== 'BOOKINGS' && showPrices) ? `<div class="stat-item">💶 Incasso Totale Previsto Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
                     </div>
             `;
 
@@ -1393,9 +1406,11 @@
                                     <th>Menu Adulti</th>
                                     <th>Menu Bimbi</th>
                                     <th>Extra & Allergie</th>
-                                    <th>Prezzi €/Persona</th>
-                                    <th>Acconto</th>
-                                    <th>Totale (€)</th>
+                                    ${showPrices ? `
+                                        <th>Prezzi €/Persona</th>
+                                        <th>Acconto</th>
+                                        <th>Totale (€)</th>
+                                    ` : ''}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1428,9 +1443,11 @@
                                 <td>${menuAdultiStr.join('<br>') || '-'}</td>
                                 <td>${ev.childMenu || '-'}</td>
                                 <td>${extraStr.join('<br>') || '-'}</td>
-                                <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
-                                <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
-                                <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
+                                ${showPrices ? `
+                                    <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
+                                    <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
+                                    <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
+                                ` : ''}
                             </tr>
                         `;
                     });
