@@ -56,11 +56,13 @@
         .table-card:active { transform: scale(0.95); }
         .table-card.free { background: #092615; border: 1.5px solid #22c55e; color: #22c55e; }
         .table-card.occupied { background: #380d0f; border: 1.5px solid #ef4444; color: #ef4444; }
+        .table-card.event-occupied { background: #2e1065; border: 1.5px solid #8b5cf6; color: #a78bfa; }
         
         .t-num { font-size: 16px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 2px; }
         .t-status { font-size: 9px; font-weight: 700; text-transform: uppercase; }
         .t-name { font-size: 9px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
         .t-occ-badge { background: #ef4444; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+        .t-ev-badge { background: #8b5cf6; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
 
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
@@ -229,11 +231,25 @@
             <form onsubmit="saveEvent(event)">
                 <input type="hidden" id="ev-id">
                 
-                <div class="sec-banner">Dati Cliente & Data Evento</div>
+                <div class="sec-banner">Dati Cliente, Data & Servizio</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Data Evento</label>
                         <input type="date" id="ev-date" onclick="this.showPicker && this.showPicker()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Servizio</label>
+                        <select id="ev-shift">
+                            <option value="Cena">Cena</option>
+                            <option value="Pranzo">Pranzo</option>
+                            <option value="Tutto il giorno">Tutto il giorno</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Cliente / Festeggiato</label>
+                        <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
                     </div>
                     <div class="form-group">
                         <label>Tipo Evento</label>
@@ -246,15 +262,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nome Cliente / Festeggiato</label>
-                        <input type="text" id="ev-name" placeholder="Es. Mario Rossi" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Telefono</label>
-                        <input type="tel" id="ev-phone" placeholder="3331234567">
-                    </div>
+                <div class="form-group">
+                    <label>Telefono Cliente</label>
+                    <input type="tel" id="ev-phone" placeholder="Es. 3331234567">
                 </div>
 
                 <div class="sec-banner">Spazio, Sale & Numero Ospiti</div>
@@ -264,8 +274,8 @@
                         <select id="ev-room"></select>
                     </div>
                     <div class="form-group">
-                        <label>Tavoli Riservati</label>
-                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3">
+                        <label>Tavoli (Vuoto = Tutta la Sala)</label>
+                        <input type="text" id="ev-tables" placeholder="Es. 1, 2, 3 o lascia vuoto">
                     </div>
                 </div>
                 <div class="form-row">
@@ -552,30 +562,84 @@
             }
         }
 
+        // FUNZIONI DI SUPPORTO PER CALCOLO TABELLE ED EVENTI
+        function getEventTables(ev, roomName) {
+            if (ev.room !== roomName) return [];
+            const totalTables = ROOMS[roomName] || 20;
+            const str = (ev.tables || '').trim();
+            if (!str || str.toLowerCase().includes('tutt')) {
+                let arr = [];
+                for (let i = 1; i <= totalTables; i++) arr.push(i);
+                return arr;
+            }
+            let set = new Set();
+            let parts = str.split(/[,;\s]+/);
+            parts.forEach(p => {
+                if (p.includes('-')) {
+                    let range = p.split('-').map(n => parseInt(n.trim()));
+                    if (range.length === 2 && !isNaN(range[0]) && !isNaN(range[1])) {
+                        for (let i = Math.min(range[0], range[1]); i <= Math.max(range[0], range[1]); i++) {
+                            set.add(i);
+                        }
+                    }
+                } else {
+                    let num = parseInt(p);
+                    if (!isNaN(num)) set.add(num);
+                }
+            });
+            return Array.from(set);
+        }
+
+        function isShiftOverlap(shift1, shift2) {
+            if (!shift1 || !shift2) return true;
+            if (shift1 === 'Tutto il giorno' || shift2 === 'Tutto il giorno') return true;
+            return shift1 === shift2;
+        }
+
+        // RENDERIZZA TABELLA TAVOLI (MONITORA SIA PRENOTAZIONI CHE EVENTI)
         function renderTablesView(container) {
             const curDate = document.getElementById('current-date').value;
             const curShift = document.getElementById('current-shift').value;
             const bookings = getBookings();
+            const events = getEvents();
 
             const totalTables = ROOMS[currentActiveTab];
             let occCount = 0;
 
             let gridHtml = '';
             for (let i = 1; i <= totalTables; i++) {
-                const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == i);
+                // Controllo Prenotazione Tradizionale
+                const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && parseInt(item.table) === i);
                 
+                // Controllo Riservazione da Evento
+                const ev = events.find(item => {
+                    if (item.date !== curDate) return false;
+                    if (!isShiftOverlap(item.shift, curShift)) return false;
+                    const evTbls = getEventTables(item, currentActiveTab);
+                    return evTbls.includes(i);
+                });
+
                 if (b) {
                     occCount++;
                     gridHtml += `
-                        <div class="table-card occupied" onclick="handleTableClick(${i}, true)">
+                        <div class="table-card occupied" onclick="handleTableClick(${i}, 'booking', '${b.id}')">
                             <div class="t-occ-badge">OCC.</div>
                             <div class="t-num">${i}</div>
                             <div class="t-name">${b.name}</div>
                         </div>
                     `;
+                } else if (ev) {
+                    occCount++;
+                    gridHtml += `
+                        <div class="table-card event-occupied" onclick="handleTableClick(${i}, 'event', '${ev.id}')">
+                            <div class="t-ev-badge">🎉 EVENTO</div>
+                            <div class="t-num">${i}</div>
+                            <div class="t-name">${ev.name}</div>
+                        </div>
+                    `;
                 } else {
                     gridHtml += `
-                        <div class="table-card free" onclick="handleTableClick(${i}, false)">
+                        <div class="table-card free" onclick="handleTableClick(${i}, 'free', null)">
                             <div class="t-num">${i}</div>
                             <div class="t-status">LIBERO</div>
                         </div>
@@ -597,10 +661,85 @@
             `;
         }
 
-        // VISUALIZZAZIONE EVENTI - MOSTRA LA DATA EVENTO IN EVIDENZA
+        // GESTIONE CLIC SUI TAVOLI
+        function handleTableClick(tableNum, statusType, id) {
+            if (statusType === 'booking') {
+                if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
+                    if (checkMasterPass()) { // Password Master "nikita78"
+                        if (id && db) {
+                            db.ref('bookings/' + id).remove();
+                        }
+                    }
+                }
+            } else if (statusType === 'event') {
+                alert(`ℹ️ Il Tavolo ${tableNum} è occupato per l'Evento/Festeggiamento.\nPer modifcarlo o gestirlo, vai nella scheda "🎉 Eventi & Festeggiamenti".`);
+            } else {
+                document.getElementById('booking-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${currentActiveTab}`;
+                document.getElementById('modal-table-num').value = tableNum;
+                document.getElementById('b-name').value = '';
+                document.getElementById('b-guests').value = '2';
+                document.getElementById('b-phone').value = '';
+                document.getElementById('b-notes').value = '';
+                openModal('booking-modal');
+            }
+        }
+
+        // SALVA PRENOTAZIONE TAVOLO CON CONTROLLO CONFLITTI E RETROATTIVITA'
+        function saveBooking(e) {
+            e.preventDefault();
+            const selectedDate = document.getElementById('current-date').value;
+            const selectedShift = document.getElementById('current-shift').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (selectedDate < today) {
+                alert("⚠️ Errore: Non puoi inserire una prenotazione con data passata!");
+                return;
+            }
+
+            const tableNum = parseInt(document.getElementById('modal-table-num').value);
+
+            // Controllo Accavallamento Prenotazione Tradizionale
+            const existingB = getBookings().find(b => b.date === selectedDate && b.shift === selectedShift && b.room === currentActiveTab && parseInt(b.table) === tableNum);
+            if (existingB) {
+                alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già prenotato da "${existingB.name}"!`);
+                return;
+            }
+
+            // Controllo Accavallamento Eventi
+            const existingEv = getEvents().find(ev => {
+                if (ev.date !== selectedDate) return false;
+                if (!isShiftOverlap(ev.shift, selectedShift)) return false;
+                const evTbls = getEventTables(ev, currentActiveTab);
+                return evTbls.includes(tableNum);
+            });
+
+            if (existingEv) {
+                alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già riservato per l'evento "${existingEv.name}"!`);
+                return;
+            }
+
+            const bookingId = 'b_' + Date.now();
+            const newBooking = {
+                id: bookingId,
+                date: selectedDate,
+                shift: selectedShift,
+                room: currentActiveTab,
+                table: tableNum,
+                name: document.getElementById('b-name').value,
+                guests: document.getElementById('b-guests').value,
+                phone: document.getElementById('b-phone').value,
+                notes: document.getElementById('b-notes').value
+            };
+
+            if (db) {
+                db.ref('bookings/' + bookingId).set(newBooking);
+            }
+            closeModal('booking-modal');
+        }
+
+        // VISUALIZZAZIONE SCHEDE EVENTI
         function renderEventsView(container) {
             let events = getEvents();
-            // Ordina gli eventi per data decrescente
             events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
             let eventsListHtml = '';
@@ -618,7 +757,7 @@
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px; flex-wrap:wrap; gap:6px;">
                                 <div>
                                     <span style="font-size:15px; font-weight:700; color:#8b5cf6;">🎉 ${e.name} (${e.type})</span>
-                                    <div style="font-size:12px; font-weight:800; color:#f59e0b; margin-top:2px;">📅 Data Evento: ${formattedDate}</div>
+                                    <div style="font-size:12px; font-weight:800; color:#f59e0b; margin-top:2px;">📅 Data Evento: ${formattedDate} (${e.shift || 'Cena'})</div>
                                 </div>
                                 <div style="display:flex; gap:6px;">
                                     <button style="background:#22c55e22; color:#22c55e; border:1px solid #22c55e; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:600; cursor:pointer;" onclick="printSingleEvent('${e.id}')">🖨️ Stampa</button>
@@ -628,7 +767,7 @@
                             </div>
                             
                             <div style="font-size:12px; color:#d4d4d8; margin-bottom:6px; line-height:1.4;">
-                                📍 <b>Sala:</b> ${e.room} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : ''}<br>
+                                📍 <b>Sala:</b> ${e.room} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : '| 🪑 <b>Intera Sala Riservata</b>'}<br>
                                 👥 <b>Ospiti:</b> ${totalGuests} Tot. (${adultsCount} Adulti + ${childrenCount} Bimbi) ${e.phone ? '| 📞 ' + e.phone : ''} ${e.outTime ? '| ⏰ Uscita: ' + e.outTime : ''}
                             </div>
 
@@ -670,7 +809,7 @@
             `;
         }
 
-        // STAMPA SINGOLO EVENTO (CON DATA)
+        // STAMPA SINGOLO EVENTO
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
@@ -717,7 +856,7 @@
                     <div class="box">
                         <div class="box-title">📋 Dati Cliente & Evento</div>
                         <div class="row">
-                            <div><b>Data Evento:</b> <span style="font-size:15px; font-weight:bold;">${formattedDate}</span></div>
+                            <div><b>Data Evento:</b> <span style="font-size:15px; font-weight:bold;">${formattedDate} (${ev.shift || 'Cena'})</span></div>
                             <div><b>Tipologia Evento:</b> ${ev.type}</div>
                         </div>
                         <div class="row" style="margin-top:5px;">
@@ -733,7 +872,7 @@
                         <div class="box-title">📍 Sala & Ospiti</div>
                         <div class="row">
                             <div><b>Sala Riservata:</b> ${ev.room}</div>
-                            <div><b>Tavoli Riservati:</b> ${ev.tables || '-'}</div>
+                            <div><b>Tavoli Riservati:</b> ${ev.tables || 'Intera Sala'}</div>
                         </div>
                         <div class="row">
                             <div><b>Totale Ospiti:</b> ${totalGuests} Totali (${adultsCount} Adulti + ${childrenCount} Bambini)</div>
@@ -790,59 +929,6 @@
             printWin.document.close();
         }
 
-        function handleTableClick(tableNum, isOccupied) {
-            if (isOccupied) {
-                if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
-                    if (checkMasterPass()) { // Password Master "nikita78"
-                        const curDate = document.getElementById('current-date').value;
-                        const curShift = document.getElementById('current-shift').value;
-                        const b = getBookings().find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && item.table == tableNum);
-                        if (b && db) {
-                            db.ref('bookings/' + b.id).remove();
-                        }
-                    }
-                }
-            } else {
-                document.getElementById('booking-modal-title').innerText = `Prenota Tavolo ${tableNum} - ${currentActiveTab}`;
-                document.getElementById('modal-table-num').value = tableNum;
-                document.getElementById('b-name').value = '';
-                document.getElementById('b-guests').value = '2';
-                document.getElementById('b-phone').value = '';
-                document.getElementById('b-notes').value = '';
-                openModal('booking-modal');
-            }
-        }
-
-        function saveBooking(e) {
-            e.preventDefault();
-            const selectedDate = document.getElementById('current-date').value;
-            const today = new Date().toISOString().split('T')[0];
-
-            if (selectedDate < today) {
-                alert("⚠️ Errore: Non puoi inserire una prenotazione retroattiva!");
-                return;
-            }
-
-            const tableNum = document.getElementById('modal-table-num').value;
-            const bookingId = 'b_' + Date.now();
-            const newBooking = {
-                id: bookingId,
-                date: selectedDate,
-                shift: document.getElementById('current-shift').value,
-                room: currentActiveTab,
-                table: tableNum,
-                name: document.getElementById('b-name').value,
-                guests: document.getElementById('b-guests').value,
-                phone: document.getElementById('b-phone').value,
-                notes: document.getElementById('b-notes').value
-            };
-
-            if (db) {
-                db.ref('bookings/' + bookingId).set(newBooking);
-            }
-            closeModal('booking-modal');
-        }
-
         function calcEventTotal() {
             const adults = parseFloat(document.getElementById('ev-adults').value) || 0;
             const children = parseFloat(document.getElementById('ev-children').value) || 0;
@@ -853,19 +939,23 @@
             document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
 
-        // APERTURA MODALE EVENTO (CON CAMPO DATA)
+        // APERTURA MODALE EVENTO CON BLOCCO MINIMO DATA ODIERNA
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
             const today = new Date().toISOString().split('T')[0];
             const curAppDate = document.getElementById('current-date').value || today;
 
+            const evDateInput = document.getElementById('ev-date');
+            evDateInput.min = today; // Imposta il minimo alla data di oggi
+
             if (eventId) {
                 const ev = getEvents().find(item => item.id === eventId);
                 if (ev) {
                     idInput.value = ev.id;
                     titleEl.innerText = '✏️ Modifica Evento';
-                    document.getElementById('ev-date').value = ev.date || curAppDate;
+                    evDateInput.value = ev.date || curAppDate;
+                    document.getElementById('ev-shift').value = ev.shift || 'Cena';
                     document.getElementById('ev-name').value = ev.name || '';
                     document.getElementById('ev-phone').value = ev.phone || '';
                     document.getElementById('ev-type').value = ev.type || 'Compleanno';
@@ -891,7 +981,8 @@
             } else {
                 idInput.value = '';
                 titleEl.innerText = '🎉 Nuovo Preventivo & Evento';
-                document.getElementById('ev-date').value = curAppDate;
+                evDateInput.value = curAppDate >= today ? curAppDate : today;
+                document.getElementById('ev-shift').value = document.getElementById('current-shift').value || 'Cena';
                 document.getElementById('ev-name').value = '';
                 document.getElementById('ev-phone').value = '';
                 document.getElementById('ev-type').value = 'Compleanno';
@@ -918,20 +1009,65 @@
             openModal('event-modal');
         }
 
-        // SALVATAGGIO EVENTO CON DATA
+        // SALVATAGGIO EVENTO CON VERIFICA RETROATTIVITÀ E ANTI-ACCAVALLAMENTO
         function saveEvent(e) {
             e.preventDefault();
             const existingId = document.getElementById('ev-id').value;
+            const evDate = document.getElementById('ev-date').value;
+            const evShift = document.getElementById('ev-shift').value;
+            const evRoom = document.getElementById('ev-room').value;
+            const evTablesStr = document.getElementById('ev-tables').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Blocco Date Passate
+            if (evDate < today) {
+                alert("⚠️ Errore: Non puoi creare o modificare un evento con una data passata!");
+                return;
+            }
+
+            // Calcolo tavoli richiesti
+            const tempEv = { room: evRoom, tables: evTablesStr };
+            const requestedTables = getEventTables(tempEv, evRoom);
+
+            // 2. Controllo Conflitti con Prenotazioni Tavoli Standard
+            const conflictBooking = getBookings().find(b => {
+                if (b.date !== evDate) return false;
+                if (!isShiftOverlap(b.shift, evShift)) return false;
+                if (b.room !== evRoom) return false;
+                return requestedTables.includes(parseInt(b.table));
+            });
+
+            if (conflictBooking) {
+                alert(`⚠️ Impossibile salvare l'evento! Il Tavolo ${conflictBooking.table} in ${evRoom} è già prenotato da "${conflictBooking.name}" per il servizio di ${conflictBooking.shift}.`);
+                return;
+            }
+
+            // 3. Controllo Conflitti con Altri Eventi
+            const conflictEvent = getEvents().find(ev => {
+                if (ev.id === existingId) return false; // Esclude se stesso in modifica
+                if (ev.date !== evDate) return false;
+                if (!isShiftOverlap(ev.shift, evShift)) return false;
+                if (ev.room !== evRoom) return false;
+                const existingEvTbls = getEventTables(ev, evRoom);
+                return requestedTables.some(t => existingEvTbls.includes(t));
+            });
+
+            if (conflictEvent) {
+                alert(`⚠️ Impossibile salvare l'evento! La sala ${evRoom} (o i tavoli richiesti) è già occupata dall'evento "${conflictEvent.name}".`);
+                return;
+            }
+
             const eventId = existingId ? existingId : ('ev_' + Date.now());
 
             const newEv = {
                 id: eventId,
-                date: document.getElementById('ev-date').value,
+                date: evDate,
+                shift: evShift,
                 name: document.getElementById('ev-name').value,
                 phone: document.getElementById('ev-phone').value,
                 type: document.getElementById('ev-type').value,
-                room: document.getElementById('ev-room').value,
-                tables: document.getElementById('ev-tables').value,
+                room: evRoom,
+                tables: evTablesStr,
                 adults: document.getElementById('ev-adults').value,
                 children: document.getElementById('ev-children').value,
                 welcome: document.getElementById('ev-welcome').value,
@@ -1142,9 +1278,9 @@
 
                         html += `
                             <tr>
-                                <td><b>${evDate}</b></td>
+                                <td><b>${evDate}</b> (${ev.shift || 'Cena'})</td>
                                 <td><b>${ev.name}</b><br><small>Tipo: ${ev.type}</small><br><small>Tel: ${ev.phone || '-'}</small></td>
-                                <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : ''}</td>
+                                <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : '(Intera Sala)'}</td>
                                 <td><b>${nAdults + nChildren} Tot.</b><br>(${nAdults} Adulti + ${nChildren} Bimbi)</td>
                                 <td>${menuAdultiStr.join('<br>') || '-'}</td>
                                 <td>${ev.childMenu || '-'}</td>
