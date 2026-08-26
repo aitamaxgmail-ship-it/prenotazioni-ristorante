@@ -450,7 +450,6 @@
             const extraCosts = document.getElementById('ev-extra-costs');
             const deposit = document.getElementById('ev-deposit');
             const unlockBtn = document.getElementById('ev-unlock-btn');
-
             if (priceAdult) priceAdult.readOnly = true;
             if (priceChild) priceChild.readOnly = true;
             if (extraCosts) extraCosts.readOnly = true;
@@ -463,7 +462,6 @@
                 unlockBtn.style.border = '1px solid #f59e0b';
             }
         }
-
         function unlockEventPrices() {
             if (checkMasterPass("🔐 Inserisci la Password Supervisore per sbloccare la modifica prezzi e spese:")) {
                 const priceAdult = document.getElementById('ev-price-adult');
@@ -471,12 +469,10 @@
                 const extraCosts = document.getElementById('ev-extra-costs');
                 const deposit = document.getElementById('ev-deposit');
                 const unlockBtn = document.getElementById('ev-unlock-btn');
-
                 if (priceAdult) priceAdult.readOnly = false;
                 if (priceChild) priceChild.readOnly = false;
                 if (extraCosts) extraCosts.readOnly = false;
                 if (deposit) deposit.readOnly = false;
-
                 if (unlockBtn) {
                     unlockBtn.innerText = '🔓 Prezzi Sbloccati (Modalità Supervisore)';
                     unlockBtn.style.background = '#22c55e22';
@@ -485,7 +481,6 @@
                 }
             }
         }
-
         // BACKUP & IMPORT
         function exportBackup() {
             const data = { bookings: getBookings(), events: getEvents(), exportDate: new Date().toISOString() };
@@ -929,7 +924,7 @@
                 <div>${eventsListHtml}</div>
             `;
         }
-        // STAMPA SINGOLO EVENTO (CON OPZIONE PREZZI & PASSWORD SUPERVISORE)
+        // STAMPA SINGOLO EVENTO (IN NUOVA SCHEDA CON LOGO & PASSWORD SUPERVISORE)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
@@ -954,17 +949,26 @@
             if(ev.first) menuAdultiList.push('<b>🍝 Primi:</b> ' + ev.first);
             if(ev.second) menuAdultiList.push('<b>🍖 Secondi:</b> ' + ev.second);
             if(ev.dessert) menuAdultiList.push('<b>🍰 Dolce / Torta:</b> ' + ev.dessert);
+            
             let printWin = window.open('', '_blank');
+            if (!printWin) {
+                alert("⚠️ Errore: Il browser ha bloccato l'apertura della nuova scheda per la stampa.");
+                return;
+            }
+
             let html = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Scheda Evento - ${ev.name}</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
                         body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
-                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-                        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
-                        .header p { margin: 4px 0 0 0; font-size: 13px; color: #555; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px; }
+                        .logo-img { max-height: 110px; width: auto; margin: 0 auto 8px auto; display: block; }
+                        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; color: #111; }
+                        .header p { margin: 4px 0 0 0; font-size: 13px; color: #555; font-weight: bold; }
                         .box { border: 1px solid #000; padding: 10px 14px; margin-bottom: 12px; border-radius: 4px; }
                         .box-title { font-size: 13px; font-weight: bold; background: #eee; padding: 4px 8px; border-bottom: 1px solid #000; margin: -10px -14px 10px -14px; text-transform: uppercase; }
                         .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
@@ -977,7 +981,8 @@
                 </head>
                 <body>
                     <div class="header">
-                        <h1>🌿 Vecchio Frantoio</h1>
+                        <img src="frantoio mod (1).png" alt="Vecchio Frantoio" class="logo-img" onerror="this.style.display='none'">
+                        <h1>Vecchio Frantoio</h1>
                         <p>Scheda Dettaglio Evento & Festeggiamento</p>
                     </div>
                     <div class="box">
@@ -1053,7 +1058,12 @@
                         Documento generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
                     </div>
                     <script>
-                        window.onload = function() { window.print(); }
+                        window.onload = function() {
+                            window.focus();
+                            setTimeout(function() {
+                                window.print();
+                            }, 300);
+                        }
                     <\/script>
                 </body>
                 </html>
@@ -1290,15 +1300,28 @@
             else if (dEnd) periodText = `Fino al ${dEnd.split('-').reverse().join('/')}`;
             let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
             let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
+            
+            closeModal('print-modal');
+
             let printWin = window.open('', '_blank');
+            if (!printWin) {
+                alert("⚠️ Errore: Il browser ha bloccato l'apertura della nuova scheda per la stampa.");
+                return;
+            }
+
             let html = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Report & Storico Completo - Vecchio Frantoio</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
                         body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-                        h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; }
+                        .header-print { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; }
+                        .logo-img { max-height: 110px; width: auto; margin: 0 auto 8px auto; display: block; }
+                        h1 { font-size: 20px; margin: 0; text-transform: uppercase; color: #111; }
+                        .header-print p { margin: 4px 0 0 0; font-size: 13px; color: #555; font-weight: bold; }
                         .filter-info { font-size: 11px; background: #f1f5f9; padding: 8px 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
                         h2 { font-size: 15px; margin-top: 20px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
                         .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
@@ -1313,7 +1336,11 @@
                     </style>
                 </head>
                 <body>
-                    <h1>🌿 Vecchio Frantoio - Report Completo Eventi & Prenotazioni</h1>
+                    <div class="header-print">
+                        <img src="frantoio mod (1).png" alt="Vecchio Frantoio" class="logo-img" onerror="this.style.display='none'">
+                        <h1>Vecchio Frantoio</h1>
+                        <p>Report Completo Eventi & Prenotazioni</p>
+                    </div>
                     
                     <div class="filter-info">
                         <b>📌 Filtri Applicati:</b><br>
@@ -1410,7 +1437,6 @@
                         if(ev.breadType) prodExtraStr.push('• Pane: ' + ev.breadType);
                         if(ev.liquors) prodExtraStr.push('• Liquori: ' + ev.liquors);
                         if(ev.cocktails) prodExtraStr.push('• Cocktail: ' + ev.cocktails);
-
                         const nAdults = parseInt(ev.adults) || 0;
                         const nChildren = parseInt(ev.children) || 0;
                         const pAdult = ev.priceAdult ? ev.priceAdult + ' €' : '-';
@@ -1441,12 +1467,16 @@
                         Documento riservato e protetto generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
                     </div>
                     <script>
-                        window.onload = function() { window.print(); }
+                        window.onload = function() {
+                            window.focus();
+                            setTimeout(function() {
+                                window.print();
+                            }, 300);
+                        }
                     <\/script>
                 </body>
                 </html>
             `;
-            closeModal('print-modal');
             printWin.document.write(html);
             printWin.document.close();
         }
