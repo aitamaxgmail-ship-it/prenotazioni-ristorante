@@ -376,6 +376,9 @@
         </div>
     </div>
     <script>
+        // LOGO EMBEDDED IN BASE64 (GARANTISCE LA STAMPA ISTANTANATA SENZA FILE ESTERNI)
+        const LOGO_BASE64 = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 280"><g text-anchor="middle"><text x="150" y="40" font-family="sans-serif" font-size="14" font-weight="bold" fill="%23d4af37">AGRITURISMO</text><text x="150" y="160" font-family="serif" font-size="130" font-weight="bold" fill="%238b7d3b">A</text><text x="150" y="220" font-family="serif" font-size="22" font-weight="bold" fill="%23d4af37">VECCHIO FRANTOIO</text></g></svg>`;
+
         // ==========================================
         // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
         // ==========================================
@@ -924,7 +927,7 @@
                 <div>${eventsListHtml}</div>
             `;
         }
-        // STAMPA SINGOLO EVENTO (IN NUOVA SCHEDA CON LOGO & PASSWORD SUPERVISORE)
+        // STAMPA SINGOLO EVENTO (IN NUOVA SCHEDA CON LOGO & CHIUSURA AUTOMATICA)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
@@ -981,7 +984,7 @@
                 </head>
                 <body>
                     <div class="header">
-                        <img src="frantoio mod (1).png" alt="Vecchio Frantoio" class="logo-img" onerror="this.style.display='none'">
+                        <img src="${LOGO_BASE64}" alt="Vecchio Frantoio" class="logo-img">
                         <h1>Vecchio Frantoio</h1>
                         <p>Scheda Dettaglio Evento & Festeggiamento</p>
                     </div>
@@ -1063,7 +1066,10 @@
                             setTimeout(function() {
                                 window.print();
                             }, 300);
-                        }
+                        };
+                        window.onafterprint = function() {
+                            window.close();
+                        };
                     <\/script>
                 </body>
                 </html>
@@ -1337,7 +1343,7 @@
                 </head>
                 <body>
                     <div class="header-print">
-                        <img src="frantoio mod (1).png" alt="Vecchio Frantoio" class="logo-img" onerror="this.style.display='none'">
+                        <img src="${LOGO_BASE64}" alt="Vecchio Frantoio" class="logo-img">
                         <h1>Vecchio Frantoio</h1>
                         <p>Report Completo Eventi & Prenotazioni</p>
                     </div>
@@ -1472,7 +1478,10 @@
                             setTimeout(function() {
                                 window.print();
                             }, 300);
-                        }
+                        };
+                        window.onafterprint = function() {
+                            window.close();
+                        };
                     <\/script>
                 </body>
                 </html>
