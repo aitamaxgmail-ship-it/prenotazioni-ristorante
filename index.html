@@ -7,17 +7,14 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #121214; color: #f4f4f5; padding: 10px; padding-bottom: 30px; display: flex; justify-content: center; }
         
         .app-container { width: 100%; max-width: 500px; margin: 0 auto; }
-
         /* LOGIN OVERLAY */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #121214; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: #1c1c20; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
-
         /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .logo { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
@@ -25,12 +22,10 @@
         .header-btns { display: flex; gap: 4px; flex-wrap: wrap; }
         .btn-hdr { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 3px; }
         .btn-hdr-print { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 700; }
-
         /* CONTROLS BAR */
         .controls-card { background: #1c1c20; border: 1px solid #27272a; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .ctrl-group label { display: block; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.4px; }
         .ctrl-group input, .ctrl-group select { width: 100%; background: #27272a; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px; font-size: 12px; outline: none; cursor: pointer; }
-
         /* TABS SCROLL BAR */
         .tabs-wrapper { 
             display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; 
@@ -38,18 +33,15 @@
         }
         .tabs-wrapper::-webkit-scrollbar { height: 4px; }
         .tabs-wrapper::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
-
         .tab-pill { background: #27272a; color: #d4d4d8; border: 1px solid #3f3f46; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
         .tab-pill.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
         .tab-pill.event-tab { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
-
         /* SECTION SUBHEADER */
         .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .sec-title { font-size: 16px; font-weight: 700; }
         .counters { font-size: 12px; font-weight: 600; }
         .c-free { color: #22c55e; margin-right: 8px; }
         .c-occ { color: #ef4444; }
-
         /* GRID TABLES 5 COLUMNS */
         .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
         .table-card { aspect-ratio: 1 / 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
@@ -63,13 +55,11 @@
         .t-name { font-size: 9px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
         .t-occ-badge { background: #ef4444; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
         .t-ev-badge { background: #8b5cf6; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
-
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
         .modal-content { background: #1c1c20; border-top: 2px solid #f59e0b; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 16px; animation: slideUp 0.2s ease-out; margin: 0 auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .modal-title { font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; text-align: center; }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 3px; }
@@ -77,18 +67,15 @@
         .form-group input[type="date"] { cursor: pointer; }
         .form-group textarea { resize: vertical; height: 50px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
         .btn-gold { background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; }
         .btn-purple { background: #8b5cf6; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px; width: 100%; font-size: 14px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
         .btn-purple:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-cancel { background: #27272a; color: #e4e4e7; font-weight: 600; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; margin-top: 6px; }
-
         .sec-banner { background: #27272a; border-left: 3px solid #f59e0b; padding: 5px 8px; font-weight: 700; font-size: 12px; color: #f59e0b; margin: 12px 0 8px 0; }
         .empty-box { text-align: center; color: #71717a; font-size: 13px; padding: 30px 0; }
     </style>
 </head>
 <body>
-
     <div id="login-overlay">
         <div class="login-card">
             <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px;">🌿 Vecchio Frantoio</h2>
@@ -100,9 +87,7 @@
             <div id="login-error" style="color:#ef4444; font-size:11px; margin-top:10px; display:none; font-weight:600;">Password errata!</div>
         </div>
     </div>
-
     <div class="app-container">
-
         <header>
             <div class="logo">🌿 Vecchio Frantoio <span class="status-badge" id="net-status">🟢 Live Cloud</span></div>
             <div class="header-btns">
@@ -113,7 +98,6 @@
                 <button class="btn-hdr" onclick="lockApp()">🔒 Blocca</button>
             </div>
         </header>
-
         <div class="controls-card">
             <div class="ctrl-group">
                 <label>Data</label>
@@ -131,16 +115,16 @@
                 </select>
             </div>
         </div>
-
         <div class="tabs-wrapper" id="tabs-wrapper"></div>
-
         <div id="main-view"></div>
-
     </div>
-
     <div class="modal" id="print-modal">
         <div class="modal-content" style="border-top-color: #3b82f6;">
-            <div class="modal-title" style="color:#3b82f6;">🖨️ Filtra & Stampa Storico Completo</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <button type="button" class="btn-hdr" onclick="closeModal('print-modal')" style="background:#27272a; border-color:#3f3f46;">⬅️ Torna indietro</button>
+                <div class="modal-title" style="color:#3b82f6; margin-bottom:0;">🖨️ Filtra & Stampa Storico Completo</div>
+                <div style="width:70px;"></div>
+            </div>
             <form onsubmit="executeFilteredPrint(event)">
                 
                 <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Seleziona Date (Include Retroattive)</div>
@@ -180,7 +164,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="sec-banner" style="border-left-color:#3b82f6; color:#3b82f6;">Cosa Includere</div>
                 <div class="form-group">
                     <label>Includi nel Report</label>
@@ -190,13 +173,13 @@
                         <option value="EVENTS">Solo Eventi & Festeggiamenti</option>
                     </select>
                 </div>
-
-                <button type="submit" class="btn-hdr btn-hdr-print" style="width:100%; padding:12px; font-size:14px; justify-content:center; margin-top:10px;">🖨️ Genera & Stampa Report Filtro</button>
-                <button type="button" class="btn-cancel" onclick="closeModal('print-modal')">Annulla</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('print-modal')" style="margin-top:0;">⬅️ Torna indietro</button>
+                    <button type="submit" class="btn-hdr btn-hdr-print" style="width:100%; padding:10px; font-size:13px; justify-content:center; margin-top:0;">🖨️ Genera & Stampa Report</button>
+                </div>
             </form>
         </div>
     </div>
-
     <div class="modal" id="booking-modal">
         <div class="modal-content">
             <div class="modal-title" id="booking-modal-title">Prenota Tavolo</div>
@@ -225,7 +208,6 @@
             </form>
         </div>
     </div>
-
     <div class="modal" id="event-modal">
         <div class="modal-content" style="border-top-color: #8b5cf6;">
             <div class="modal-title" id="event-modal-title" style="color:#8b5cf6;">🎉 Preventivo & Evento Frantoio</div>
@@ -267,7 +249,6 @@
                     <label>Telefono Cliente</label>
                     <input type="tel" id="ev-phone" placeholder="Es. 3331234567">
                 </div>
-
                 <div class="sec-banner">Spazio, Sale & Numero Ospiti</div>
                 <div class="form-row">
                     <div class="form-group">
@@ -280,7 +261,6 @@
                     </div>
                 </div>
                 <div id="ev-tables-warning" style="font-size:11px; font-weight:700; margin-bottom:10px; min-height:16px;"></div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>N° Adulti</label>
@@ -291,7 +271,6 @@
                         <input type="number" id="ev-children" value="5" min="0" oninput="calcEventTotal()">
                     </div>
                 </div>
-
                 <div class="sec-banner">Menu Adulti</div>
                 <div class="form-group">
                     <label>Benvenuto</label>
@@ -313,13 +292,35 @@
                     <label>Frutta & Dolci / Torta</label>
                     <input type="text" id="ev-dessert" placeholder="Es. Torta Millefoglie">
                 </div>
-
                 <div class="sec-banner" style="border-left-color: #3b82f6; color: #3b82f6;">Menu Bimbi / Bambini</div>
                 <div class="form-group">
                     <label>Menu Selezionato per Bambini</label>
                     <input type="text" id="ev-child-menu" placeholder="Es. Pennette al pomodoro, Cotoletta con patatine">
                 </div>
-
+                <div class="sec-banner" style="border-left-color: #eab308; color: #eab308;">🍕 Pizza, Pane & Bevande Extra</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Giropizza</label>
+                        <select id="ev-giropizza">
+                            <option value="No">No</option>
+                            <option value="Sì">Sì</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo di Pane</label>
+                        <input type="text" id="ev-bread-type" placeholder="Es. Casereccio, Integrale, Senza Glutine">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipi di Liquore</label>
+                        <input type="text" id="ev-liquors" placeholder="Es. Amaro del Capo, Limoncello, Grappa">
+                    </div>
+                    <div class="form-group">
+                        <label>Cocktail</label>
+                        <input type="text" id="ev-cocktails" placeholder="Es. Aperol Spritz, Mojito, Gin Tonic">
+                    </div>
+                </div>
                 <div class="sec-banner">Dettagli & Extra</div>
                 <div class="form-row">
                     <div class="form-group">
@@ -335,8 +336,10 @@
                     <label>Intolleranze / Allergie / Note Variazioni</label>
                     <input type="text" id="ev-notes" placeholder="Es. 2 celiaci adulti, 1 intollerante lattosio bimbo">
                 </div>
-
                 <div class="sec-banner">Preventivo Economico (Visibile Solo in Stampa Protetta)</div>
+                <div style="margin-bottom:10px;">
+                    <button type="button" id="ev-unlock-btn" onclick="unlockEventPrices()" class="btn-hdr" style="width:100%; justify-content:center; padding:8px; font-weight:700; background:#27272a; color:#f59e0b; border:1px solid #f59e0b;">🔒 Campi Prezzo Bloccati - Clicca per Sbloccare (Supervisore)</button>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Prezzo Adulto (€/pers)</label>
@@ -349,25 +352,29 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Totale Evento Calcolato (€)</label>
-                        <input type="number" id="ev-price-total" placeholder="Totale €" readonly style="background:#18181b; color:#f59e0b; font-weight:bold;">
+                        <label>Spese Extra (€)</label>
+                        <input type="number" id="ev-extra-costs" placeholder="Es. 50" oninput="calcEventTotal()">
                     </div>
                     <div class="form-group">
                         <label>Acconto Versato (€)</label>
                         <input type="number" id="ev-deposit" value="0">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Orario di Uscita Previsto</label>
-                    <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Totale Evento Calcolato (€)</label>
+                        <input type="number" id="ev-price-total" placeholder="Totale €" readonly style="background:#18181b; color:#f59e0b; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Orario di Uscita Previsto</label>
+                        <input type="text" id="ev-out-time" placeholder="Es. Ore 01:30">
+                    </div>
                 </div>
-
                 <button type="submit" id="ev-submit-btn" class="btn-purple">💾 Salva Evento / Modifiche</button>
                 <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annulla</button>
             </form>
         </div>
     </div>
-
     <script>
         // ==========================================
         // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
@@ -382,28 +389,22 @@
             appId: "1:1062473587372:web:984f7424b56f31b7571d09",
             measurementId: "G-CRM1C9YHC8"
         };
-
         const MASTER_DELETE_PASS = "nikita78"; // Password Master / Supervisore
-
         let db = null;
         window.vf_bookings = [];
         window.vf_events = [];
-
         // Filtri Date per Eventi
         let eventFilterStartDate = '';
         let eventFilterEndDate = '';
-
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
-
             // Sincronizzazione Realtime Prenotazioni
             db.ref('bookings').on('value', (snapshot) => {
                 const val = snapshot.val();
                 window.vf_bookings = val ? Object.values(val) : [];
                 renderView();
             });
-
             // Sincronizzazione Realtime Eventi
             db.ref('events').on('value', (snapshot) => {
                 const val = snapshot.val();
@@ -415,10 +416,8 @@
             document.getElementById('net-status').innerText = '⚠️ Local Mode';
             document.getElementById('net-status').style.color = '#f59e0b';
         }
-
         function getBookings() { return window.vf_bookings || []; }
         function getEvents() { return window.vf_events || []; }
-
         // CONTROL ACCESS & LOCK
         function checkPassword(e) {
             e.preventDefault();
@@ -431,11 +430,9 @@
                 document.getElementById('login-error').style.display = 'block';
             }
         }
-
         function lockApp() {
             document.getElementById('login-overlay').style.display = 'flex';
         }
-
         // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
         function checkMasterPass(customPrompt = "🔐 Inserisci la Password Master / Supervisore per accedere:") {
             const pass = prompt(customPrompt);
@@ -444,6 +441,48 @@
             } else {
                 if (pass !== null) alert("❌ Password errata! Accesso negato.");
                 return false;
+            }
+        }
+        // GESTIONE PERMESSI CAMPI PREZZI (SUPERVISORE)
+        function lockEventPriceInputs() {
+            const priceAdult = document.getElementById('ev-price-adult');
+            const priceChild = document.getElementById('ev-price-child');
+            const extraCosts = document.getElementById('ev-extra-costs');
+            const deposit = document.getElementById('ev-deposit');
+            const unlockBtn = document.getElementById('ev-unlock-btn');
+
+            if (priceAdult) priceAdult.readOnly = true;
+            if (priceChild) priceChild.readOnly = true;
+            if (extraCosts) extraCosts.readOnly = true;
+            if (deposit) deposit.readOnly = true;
+            
+            if (unlockBtn) {
+                unlockBtn.innerText = '🔒 Campi Prezzo Bloccati - Clicca per Sbloccare (Supervisore)';
+                unlockBtn.style.background = '#27272a';
+                unlockBtn.style.color = '#f59e0b';
+                unlockBtn.style.border = '1px solid #f59e0b';
+            }
+        }
+
+        function unlockEventPrices() {
+            if (checkMasterPass("🔐 Inserisci la Password Supervisore per sbloccare la modifica prezzi e spese:")) {
+                const priceAdult = document.getElementById('ev-price-adult');
+                const priceChild = document.getElementById('ev-price-child');
+                const extraCosts = document.getElementById('ev-extra-costs');
+                const deposit = document.getElementById('ev-deposit');
+                const unlockBtn = document.getElementById('ev-unlock-btn');
+
+                if (priceAdult) priceAdult.readOnly = false;
+                if (priceChild) priceChild.readOnly = false;
+                if (extraCosts) extraCosts.readOnly = false;
+                if (deposit) deposit.readOnly = false;
+
+                if (unlockBtn) {
+                    unlockBtn.innerText = '🔓 Prezzi Sbloccati (Modalità Supervisore)';
+                    unlockBtn.style.background = '#22c55e22';
+                    unlockBtn.style.color = '#22c55e';
+                    unlockBtn.style.border = '1px solid #22c55e';
+                }
             }
         }
 
@@ -458,7 +497,6 @@
             a.click();
             URL.revokeObjectURL(url);
         }
-
         function importBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -491,7 +529,6 @@
             };
             reader.readAsText(file);
         }
-
         // ROOMS CONFIG CON NUMERO MASSIMO TAVOLI PER SALA
         const ROOMS = {
             "Sala Esterna": 18,
@@ -500,18 +537,14 @@
             "Sala Vetrata": 10,
             "Sala Privée": 9
         };
-
         let currentActiveTab = "Sala Esterna";
-
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('current-date');
             dateInput.value = today;
             dateInput.min = today; // BLOCCO DATE RETROATTIVE IN APPLICAZIONE
-
             setupRoomSelects();
             renderView();
-
             const tabsWrapper = document.getElementById('tabs-wrapper');
             tabsWrapper.addEventListener('wheel', (evt) => {
                 if (evt.deltaY !== 0) {
@@ -520,7 +553,6 @@
                 }
             }, { passive: false });
         });
-
         function validateDateAndRender() {
             const dateInput = document.getElementById('current-date');
             const today = new Date().toISOString().split('T')[0];
@@ -530,18 +562,15 @@
             }
             renderView();
         }
-
         function setupRoomSelects() {
             const evRoom = document.getElementById('ev-room');
             if(!evRoom) return;
             evRoom.innerHTML = '';
             Object.keys(ROOMS).forEach(r => { evRoom.innerHTML += `<option value="${r}">${r}</option>`; });
         }
-
         function renderTabs() {
             const wrapper = document.getElementById('tabs-wrapper');
             wrapper.innerHTML = '';
-
             Object.keys(ROOMS).forEach(r => {
                 const btn = document.createElement('button');
                 btn.className = `tab-pill ${r === currentActiveTab ? 'active' : ''}`;
@@ -549,26 +578,22 @@
                 btn.onclick = () => { currentActiveTab = r; renderView(); };
                 wrapper.appendChild(btn);
             });
-
             const evBtn = document.createElement('button');
             evBtn.className = `tab-pill event-tab ${currentActiveTab === 'EVENTI' ? 'active' : ''}`;
             evBtn.innerText = `🎉 Eventi & Festeggiamenti`;
             evBtn.onclick = () => { currentActiveTab = 'EVENTI'; renderView(); };
             wrapper.appendChild(evBtn);
         }
-
         function renderView() {
             renderTabs();
             const mainView = document.getElementById('main-view');
             mainView.innerHTML = '';
-
             if (currentActiveTab === 'EVENTI') {
                 renderEventsView(mainView);
             } else {
                 renderTablesView(mainView);
             }
         }
-
         // FUNZIONE PER ESTRARRE I TAVOLI DIGITATI DALL'UTENTE
         function getEventTables(ev, roomName) {
             if (ev.room !== roomName) return [];
@@ -596,13 +621,11 @@
             });
             return Array.from(set).sort((a, b) => a - b);
         }
-
         function isShiftOverlap(shift1, shift2) {
             if (!shift1 || !shift2) return true;
             if (shift1 === 'Tutto il giorno' || shift2 === 'Tutto il giorno') return true;
             return shift1 === shift2;
         }
-
         // CONTROLLO DISPONIBILITA' E ESISTENZA TAVOLI IN TEMPO REALE
         function checkEventTablesAvailability() {
             const evId = document.getElementById('ev-id').value;
@@ -612,19 +635,15 @@
             const evTablesStr = document.getElementById('ev-tables').value;
             const warningEl = document.getElementById('ev-tables-warning');
             const submitBtn = document.getElementById('ev-submit-btn');
-
             if (!warningEl) return;
-
             if (!evDate) {
                 warningEl.innerHTML = '';
                 if (submitBtn) submitBtn.disabled = false;
                 return;
             }
-
             const maxTablesInRoom = ROOMS[evRoom] || 0;
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
-
             if (evTablesStr.trim() !== '') {
                 const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
                 if (invalidTables.length > 0) {
@@ -634,21 +653,18 @@
                     return;
                 }
             }
-
             const conflictBooking = getBookings().find(b => {
                 if (b.date !== evDate) return false;
                 if (!isShiftOverlap(b.shift, evShift)) return false;
                 if (b.room !== evRoom) return false;
                 return requestedTables.includes(parseInt(b.table));
             });
-
             if (conflictBooking) {
                 warningEl.style.color = '#ef4444';
                 warningEl.innerHTML = `❌ IMMOGIBILE: Tavolo ${conflictBooking.table} in ${evRoom} è già occupato da "${conflictBooking.name}" (${conflictBooking.shift})!`;
                 if (submitBtn) submitBtn.disabled = true;
                 return;
             }
-
             const conflictEvent = getEvents().find(ev => {
                 if (ev.id === evId) return false;
                 if (ev.date !== evDate) return false;
@@ -657,14 +673,12 @@
                 const existingEvTbls = getEventTables(ev, evRoom);
                 return requestedTables.some(t => existingEvTbls.includes(t));
             });
-
             if (conflictEvent) {
                 warningEl.style.color = '#ef4444';
                 warningEl.innerHTML = `❌ IMMOGIBILE: La sala/tavoli in ${evRoom} sono già occupati dall'evento "${conflictEvent.name}" (${conflictEvent.shift})!`;
                 if (submitBtn) submitBtn.disabled = true;
                 return;
             }
-
             warningEl.style.color = '#22c55e';
             if (evTablesStr.trim() !== '') {
                 warningEl.innerHTML = `🟢 OK: Tavoli ${requestedTables.join(', ')} disponibili in ${evRoom}!`;
@@ -673,17 +687,14 @@
             }
             if (submitBtn) submitBtn.disabled = false;
         }
-
         // RENDERIZZA TABELLA TAVOLI
         function renderTablesView(container) {
             const curDate = document.getElementById('current-date').value;
             const curShift = document.getElementById('current-shift').value;
             const bookings = getBookings();
             const events = getEvents();
-
             const totalTables = ROOMS[currentActiveTab];
             let occCount = 0;
-
             let gridHtml = '';
             for (let i = 1; i <= totalTables; i++) {
                 const b = bookings.find(item => item.date === curDate && item.shift === curShift && item.room === currentActiveTab && parseInt(item.table) === i);
@@ -694,7 +705,6 @@
                     const evTbls = getEventTables(item, currentActiveTab);
                     return evTbls.includes(i);
                 });
-
                 if (b) {
                     occCount++;
                     gridHtml += `
@@ -722,9 +732,7 @@
                     `;
                 }
             }
-
             const freeCount = totalTables - occCount;
-
             container.innerHTML = `
                 <div class="sec-header">
                     <div class="sec-title">${currentActiveTab}</div>
@@ -736,7 +744,6 @@
                 <div class="tables-grid">${gridHtml}</div>
             `;
         }
-
         // GESTIONE CLIC SUI TAVOLI
         function handleTableClick(tableNum, statusType, id) {
             if (statusType === 'booking') {
@@ -759,39 +766,32 @@
                 openModal('booking-modal');
             }
         }
-
         // SALVA PRENOTAZIONE TAVOLO
         function saveBooking(e) {
             e.preventDefault();
             const selectedDate = document.getElementById('current-date').value;
             const selectedShift = document.getElementById('current-shift').value;
             const today = new Date().toISOString().split('T')[0];
-
             if (selectedDate < today) {
                 alert("⚠️ Errore: Non puoi inserire una prenotazione con data passata!");
                 return;
             }
-
             const tableNum = parseInt(document.getElementById('modal-table-num').value);
-
             const existingB = getBookings().find(b => b.date === selectedDate && b.shift === selectedShift && b.room === currentActiveTab && parseInt(b.table) === tableNum);
             if (existingB) {
                 alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già prenotato da "${existingB.name}"!`);
                 return;
             }
-
             const existingEv = getEvents().find(ev => {
                 if (ev.date !== selectedDate) return false;
                 if (!isShiftOverlap(ev.shift, selectedShift)) return false;
                 const evTbls = getEventTables(ev, currentActiveTab);
                 return evTbls.includes(tableNum);
             });
-
             if (existingEv) {
                 alert(`⚠️ Il Tavolo ${tableNum} in ${currentActiveTab} è già riservato per l'evento "${existingEv.name}"!`);
                 return;
             }
-
             const bookingId = 'b_' + Date.now();
             const newBooking = {
                 id: bookingId,
@@ -804,42 +804,35 @@
                 phone: document.getElementById('b-phone').value,
                 notes: document.getElementById('b-notes').value
             };
-
             if (db) {
                 db.ref('bookings/' + bookingId).set(newBooking);
             }
             closeModal('booking-modal');
         }
-
         // GESTIONE FILTRI DATE EVENTI
         function updateEventFilters() {
             eventFilterStartDate = document.getElementById('ev-filter-start').value;
             eventFilterEndDate = document.getElementById('ev-filter-end').value;
             renderView();
         }
-
         function setNext7DaysFilter() {
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
             const next7Days = new Date();
             next7Days.setDate(today.getDate() + 7);
             const limitStr = next7Days.toISOString().split('T')[0];
-
             eventFilterStartDate = todayStr;
             eventFilterEndDate = limitStr;
             renderView();
         }
-
         function resetEventDateFilters() {
             eventFilterStartDate = '';
             eventFilterEndDate = '';
             renderView();
         }
-
         // VISUALIZZAZIONE SCHEDE EVENTI (ORDINATI PER DATA CRESCENTE CON FILTRO INTERVALLO DATE)
         function renderEventsView(container) {
             let events = getEvents();
-
             // Applicazione filtri per intervallo date
             if (eventFilterStartDate) {
                 events = events.filter(ev => ev.date && ev.date >= eventFilterStartDate);
@@ -847,10 +840,8 @@
             if (eventFilterEndDate) {
                 events = events.filter(ev => ev.date && ev.date <= eventFilterEndDate);
             }
-
             // Ordinamento crescente per data
             events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-
             let eventsListHtml = '';
             if (events.length === 0) {
                 eventsListHtml = `<div class="empty-box">Nessun evento trovato nell'intervallo date selezionato.</div>`;
@@ -860,7 +851,6 @@
                     const childrenCount = parseInt(e.children) || 0;
                     const totalGuests = adultsCount + childrenCount;
                     const formattedDate = e.date ? e.date.split('-').reverse().join('/') : 'Non specificata';
-
                     eventsListHtml += `
                         <div style="background:#1c1c20; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin-bottom:12px; position:relative;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px dashed #3f3f46; padding-bottom:6px; flex-wrap:wrap; gap:6px;">
@@ -879,7 +869,6 @@
                                 📍 <b>Sala:</b> ${e.room} ${e.tables ? '| 🪑 <b>Tavoli:</b> ' + e.tables : '| 🪑 <b>Intera Sala Riservata</b>'}<br>
                                 👥 <b>Ospiti:</b> ${totalGuests} Tot. (${adultsCount} Adulti + ${childrenCount} Bimbi) ${e.phone ? '| 📞 ' + e.phone : ''} ${e.outTime ? '| ⏰ Uscita: ' + e.outTime : ''}
                             </div>
-
                             <div style="background:#27272a; border-radius:6px; padding:8px; margin-top:8px; font-size:11px; color:#e4e4e7; display:flex; flex-direction:column; gap:4px;">
                                 <div style="font-weight:700; color:#f59e0b; font-size:11px; margin-bottom:2px;">🍽️ Menu Adulti:</div>
                                 ${e.welcome ? `<div>🥂 <b>Benvenuto:</b> ${e.welcome}</div>` : ''}
@@ -889,14 +878,21 @@
                                 ${e.dessert ? `<div>🍰 <b>Dolce / Torta:</b> ${e.dessert}</div>` : ''}
                                 ${(!e.welcome && !e.starter && !e.first && !e.second && !e.dessert) ? `<div style="color:#71717a; font-style:italic;">Nessuna portata adulti specificata</div>` : ''}
                             </div>
-
                             ${(childrenCount > 0 || e.childMenu) ? `
                                 <div style="background:#1e293b; border:1px solid #3b82f6; border-radius:6px; padding:8px; margin-top:6px; font-size:11px; color:#e2e8f0;">
                                     <div style="font-weight:700; color:#3b82f6; font-size:11px; margin-bottom:2px;">🎈 Menu Bimbi (${childrenCount} Bambini):</div>
                                     <div>${e.childMenu || 'Menu bimbi standard'}</div>
                                 </div>
                             ` : ''}
-
+                            ${(e.giropizza === 'Sì' || e.breadType || e.liquors || e.cocktails) ? `
+                                <div style="background:#1e1b4b; border:1px solid #6366f1; border-radius:6px; padding:8px; margin-top:6px; font-size:11px; color:#e0e7ff;">
+                                    <div style="font-weight:700; color:#818cf8; font-size:11px; margin-bottom:2px;">🍕 Pizza, Pane & Bevande Extra:</div>
+                                    ${e.giropizza === 'Sì' ? `<div>🍕 <b>Giropizza:</b> Sì</div>` : ''}
+                                    ${e.breadType ? `<div>🥖 <b>Tipo di Pane:</b> ${e.breadType}</div>` : ''}
+                                    ${e.liquors ? `<div>🥃 <b>Liquori:</b> ${e.liquors}</div>` : ''}
+                                    ${e.cocktails ? `<div>🍹 <b>Cocktail:</b> ${e.cocktails}</div>` : ''}
+                                </div>
+                            ` : ''}
                             ${(e.decor || e.music || e.notes) ? `
                                 <div style="background:#18181b; border:1px solid #27272a; border-radius:6px; padding:6px 8px; margin-top:6px; font-size:11px; color:#a1a1aa;">
                                     ${e.decor ? `<div>🎨 <b>Addobbi/Tovaglia:</b> ${e.decor}</div>` : ''}
@@ -908,13 +904,11 @@
                     `;
                 });
             }
-
             container.innerHTML = `
                 <div class="sec-header">
                     <div class="sec-title">🎉 Eventi & Festeggiamenti</div>
                     <button class="btn-hdr" style="background:#8b5cf6; color:#fff; font-weight:700;" onclick="openEventModal()">+ Nuovo Evento</button>
                 </div>
-
                 <div style="background:#1c1c20; border:1px solid #27272a; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; flex-direction:column; gap:6px;">
                     <div style="font-size:11px; font-weight:700; color:#8b5cf6; text-transform:uppercase;">📅 Filtra Eventi da una data ad un'altra</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
@@ -932,16 +926,13 @@
                         <button class="btn-hdr" style="font-size:10px; padding:3px 8px; background:#ef444422; color:#ef4444; border-color:#ef4444;" onclick="resetEventDateFilters()">✖️ Reset Filtri</button>
                     </div>
                 </div>
-
                 <div>${eventsListHtml}</div>
             `;
         }
-
         // STAMPA SINGOLO EVENTO (CON OPZIONE PREZZI & PASSWORD SUPERVISORE)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
-
             // Scelta utente: Stampare con o senza prezzi
             let showPrices = false;
             const wantPrices = confirm("Vuoi includere il Preventivo Economico, i Prezzi e il Totale nella stampa?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
@@ -953,19 +944,16 @@
                     alert("⚠️ Password errata o annullata! La scheda verrà generata SENZA i prezzi.");
                 }
             }
-
             const adultsCount = parseInt(ev.adults) || 0;
             const childrenCount = parseInt(ev.children) || 0;
             const totalGuests = adultsCount + childrenCount;
             const formattedDate = ev.date ? ev.date.split('-').reverse().join('/') : 'Non specificata';
-
             let menuAdultiList = [];
             if(ev.welcome) menuAdultiList.push('<b>🥂 Benvenuto:</b> ' + ev.welcome);
             if(ev.starter) menuAdultiList.push('<b>🥗 Antipasto:</b> ' + ev.starter);
             if(ev.first) menuAdultiList.push('<b>🍝 Primi:</b> ' + ev.first);
             if(ev.second) menuAdultiList.push('<b>🍖 Secondi:</b> ' + ev.second);
             if(ev.dessert) menuAdultiList.push('<b>🍰 Dolce / Torta:</b> ' + ev.dessert);
-
             let printWin = window.open('', '_blank');
             let html = `
                 <!DOCTYPE html>
@@ -992,7 +980,6 @@
                         <h1>🌿 Vecchio Frantoio</h1>
                         <p>Scheda Dettaglio Evento & Festeggiamento</p>
                     </div>
-
                     <div class="box">
                         <div class="box-title">📋 Dati Cliente & Evento</div>
                         <div class="row">
@@ -1007,7 +994,6 @@
                             <div><b>Orario Uscita Previsto:</b> ${ev.outTime || '-'}</div>
                         </div>
                     </div>
-
                     <div class="box">
                         <div class="box-title">📍 Sala & Ospiti</div>
                         <div class="row">
@@ -1018,19 +1004,25 @@
                             <div><b>Totale Ospiti:</b> ${totalGuests} Totali (${adultsCount} Adulti + ${childrenCount} Bambini)</div>
                         </div>
                     </div>
-
                     <div class="box">
                         <div class="box-title">🍽️ Menu Adulti</div>
                         ${menuAdultiList.length > 0 ? menuAdultiList.map(m => `<div class="menu-item">${m}</div>`).join('') : '<div class="menu-item"><i>Nessuna portata specificata</i></div>'}
                     </div>
-
                     ${(childrenCount > 0 || ev.childMenu) ? `
                     <div class="box">
                         <div class="box-title">🎈 Menu Bimbi (${childrenCount} Bambini)</div>
                         <div class="menu-item">${ev.childMenu || 'Menu bimbi standard'}</div>
                     </div>
                     ` : ''}
-
+                    ${(ev.giropizza === 'Sì' || ev.breadType || ev.liquors || ev.cocktails) ? `
+                    <div class="box">
+                        <div class="box-title">🍕 Pizza, Pane & Bevande Extra</div>
+                        ${ev.giropizza === 'Sì' ? `<div class="menu-item"><b>Giropizza:</b> Sì</div>` : ''}
+                        ${ev.breadType ? `<div class="menu-item"><b>Tipo di Pane:</b> ${ev.breadType}</div>` : ''}
+                        ${ev.liquors ? `<div class="menu-item"><b>Liquori:</b> ${ev.liquors}</div>` : ''}
+                        ${ev.cocktails ? `<div class="menu-item"><b>Cocktail:</b> ${ev.cocktails}</div>` : ''}
+                    </div>
+                    ` : ''}
                     ${(ev.decor || ev.music || ev.notes) ? `
                     <div class="box">
                         <div class="box-title">🎨 Extra & Note Speciali</div>
@@ -1039,7 +1031,6 @@
                         ${ev.notes ? `<div class="menu-item" style="color:#c00;"><b>⚠️ Intolleranze / Allergie / Note:</b> ${ev.notes}</div>` : ''}
                     </div>
                     ` : ''}
-
                     ${showPrices ? `
                     <div class="box">
                         <div class="box-title">💶 Preventivo Economico & Calcoli</div>
@@ -1047,50 +1038,46 @@
                             <div><b>Prezzo Adulti:</b> ${ev.priceAdult ? ev.priceAdult + ' € / pers' : '-'}</div>
                             <div><b>Prezzo Bimbi:</b> ${ev.priceChild ? ev.priceChild + ' € / pers' : '-'}</div>
                         </div>
+                        <div class="row" style="margin-top:5px;">
+                            <div><b>Spese Extra:</b> ${ev.extraCosts ? ev.extraCosts + ' €' : '0 €'}</div>
+                            <div><b>Acconto Versato:</b> ${ev.deposit ? ev.deposit + ' €' : '0 €'}</div>
+                        </div>
                         <div class="totali-box">
                             <div class="row">
-                                <div><b>Acconto Versato:</b> ${ev.deposit ? ev.deposit + ' €' : '0 €'}</div>
                                 <div><b style="font-size:15px;">TOTALE EVENTO: ${ev.priceTotal ? ev.priceTotal + ' €' : '0 €'}</b></div>
                             </div>
                         </div>
                     </div>
                     ` : ''}
-
                     <div class="footer">
                         Documento generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
                     </div>
-
                     <script>
                         window.onload = function() { window.print(); }
                     <\/script>
                 </body>
                 </html>
             `;
-
             printWin.document.write(html);
             printWin.document.close();
         }
-
         function calcEventTotal() {
             const adults = parseFloat(document.getElementById('ev-adults').value) || 0;
             const children = parseFloat(document.getElementById('ev-children').value) || 0;
             const priceAdult = parseFloat(document.getElementById('ev-price-adult').value) || 0;
             const priceChild = parseFloat(document.getElementById('ev-price-child').value) || 0;
-
-            const total = (adults * priceAdult) + (children * priceChild);
+            const extraCosts = parseFloat(document.getElementById('ev-extra-costs').value) || 0;
+            const total = (adults * priceAdult) + (children * priceChild) + extraCosts;
             document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
-
         // APERTURA MODALE EVENTO
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
             const today = new Date().toISOString().split('T')[0];
             const curAppDate = document.getElementById('current-date').value || today;
-
             const evDateInput = document.getElementById('ev-date');
             evDateInput.min = today;
-
             if (eventId) {
                 const ev = getEvents().find(item => item.id === eventId);
                 if (ev) {
@@ -1111,11 +1098,16 @@
                     document.getElementById('ev-second').value = ev.second || '';
                     document.getElementById('ev-dessert').value = ev.dessert || '';
                     document.getElementById('ev-child-menu').value = ev.childMenu || '';
+                    document.getElementById('ev-giropizza').value = ev.giropizza || 'No';
+                    document.getElementById('ev-bread-type').value = ev.breadType || '';
+                    document.getElementById('ev-liquors').value = ev.liquors || '';
+                    document.getElementById('ev-cocktails').value = ev.cocktails || '';
                     document.getElementById('ev-decor').value = ev.decor || '';
                     document.getElementById('ev-music').value = ev.music || '';
                     document.getElementById('ev-notes').value = ev.notes || '';
                     document.getElementById('ev-price-adult').value = ev.priceAdult || '';
                     document.getElementById('ev-price-child').value = ev.priceChild || '';
+                    document.getElementById('ev-extra-costs').value = ev.extraCosts || '';
                     document.getElementById('ev-price-total').value = ev.priceTotal || '';
                     document.getElementById('ev-deposit').value = ev.deposit || '0';
                     document.getElementById('ev-out-time').value = ev.outTime || '';
@@ -1138,20 +1130,25 @@
                 document.getElementById('ev-second').value = '';
                 document.getElementById('ev-dessert').value = '';
                 document.getElementById('ev-child-menu').value = '';
+                document.getElementById('ev-giropizza').value = 'No';
+                document.getElementById('ev-bread-type').value = '';
+                document.getElementById('ev-liquors').value = '';
+                document.getElementById('ev-cocktails').value = '';
                 document.getElementById('ev-decor').value = '';
                 document.getElementById('ev-music').value = '';
                 document.getElementById('ev-notes').value = '';
                 document.getElementById('ev-price-adult').value = '';
                 document.getElementById('ev-price-child').value = '';
+                document.getElementById('ev-extra-costs').value = '';
                 document.getElementById('ev-price-total').value = '';
                 document.getElementById('ev-deposit').value = '0';
                 document.getElementById('ev-out-time').value = '';
             }
+            lockEventPriceInputs();
             calcEventTotal();
             checkEventTablesAvailability();
             openModal('event-modal');
         }
-
         // SALVATAGGIO EVENTO
         function saveEvent(e) {
             e.preventDefault();
@@ -1161,16 +1158,13 @@
             const evRoom = document.getElementById('ev-room').value;
             const evTablesStr = document.getElementById('ev-tables').value;
             const today = new Date().toISOString().split('T')[0];
-
             if (evDate < today) {
                 alert("⚠️ Errore: Non puoi creare o modificare un evento con una data passata!");
                 return;
             }
-
             const maxTablesInRoom = ROOMS[evRoom] || 0;
             const tempEv = { room: evRoom, tables: evTablesStr };
             const requestedTables = getEventTables(tempEv, evRoom);
-
             if (evTablesStr.trim() !== '') {
                 const invalidTables = requestedTables.filter(t => t < 1 || t > maxTablesInRoom);
                 if (invalidTables.length > 0) {
@@ -1178,19 +1172,16 @@
                     return;
                 }
             }
-
             const conflictBooking = getBookings().find(b => {
                 if (b.date !== evDate) return false;
                 if (!isShiftOverlap(b.shift, evShift)) return false;
                 if (b.room !== evRoom) return false;
                 return requestedTables.includes(parseInt(b.table));
             });
-
             if (conflictBooking) {
                 alert(`⚠️ Impossibile salvare l'evento! Il Tavolo ${conflictBooking.table} in ${evRoom} è già prenotato da "${conflictBooking.name}" per il servizio di ${conflictBooking.shift}.`);
                 return;
             }
-
             const conflictEvent = getEvents().find(ev => {
                 if (ev.id === existingId) return false;
                 if (ev.date !== evDate) return false;
@@ -1199,14 +1190,11 @@
                 const existingEvTbls = getEventTables(ev, evRoom);
                 return requestedTables.some(t => existingEvTbls.includes(t));
             });
-
             if (conflictEvent) {
                 alert(`⚠️ Impossibile salvare l'evento! La sala ${evRoom} (o i tavoli richiesti) è già occupata dall'evento "${conflictEvent.name}".`);
                 return;
             }
-
             const eventId = existingId ? existingId : ('ev_' + Date.now());
-
             const newEv = {
                 id: eventId,
                 date: evDate,
@@ -1224,22 +1212,25 @@
                 second: document.getElementById('ev-second').value,
                 dessert: document.getElementById('ev-dessert').value,
                 childMenu: document.getElementById('ev-child-menu').value,
+                giropizza: document.getElementById('ev-giropizza').value,
+                breadType: document.getElementById('ev-bread-type').value,
+                liquors: document.getElementById('ev-liquors').value,
+                cocktails: document.getElementById('ev-cocktails').value,
                 decor: document.getElementById('ev-decor').value,
                 music: document.getElementById('ev-music').value,
                 notes: document.getElementById('ev-notes').value,
                 priceAdult: document.getElementById('ev-price-adult').value,
                 priceChild: document.getElementById('ev-price-child').value,
+                extraCosts: document.getElementById('ev-extra-costs').value,
                 priceTotal: document.getElementById('ev-price-total').value,
                 deposit: document.getElementById('ev-deposit').value,
                 outTime: document.getElementById('ev-out-time').value
             };
-
             if (db) {
                 db.ref('events/' + eventId).set(newEv);
             }
             closeModal('event-modal');
         }
-
         function deleteEvent(eventId) {
             if (confirm('Vuoi eliminare questo evento?')) {
                 if (checkMasterPass()) {
@@ -1249,7 +1240,6 @@
                 }
             }
         }
-
         // ==========================================
         // FILTRI STAMPA & STORICO COMPLETO
         // ==========================================
@@ -1263,10 +1253,8 @@
                 openModal('print-modal');
             }
         }
-
         function executeFilteredPrint(e) {
             e.preventDefault();
-
             // Scelta utente: Stampare il report con o senza prezzi
             let showPrices = false;
             const wantPrices = confirm("Vuoi includere i Prezzi e gli Incassi nel Report finale?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
@@ -1277,41 +1265,31 @@
                     alert("⚠️ Password errata o annullata! Il Report verrà generato SENZA i prezzi.");
                 }
             }
-
             const dStart = document.getElementById('pr-date-start').value;
             const dEnd = document.getElementById('pr-date-end').value;
             const selRoom = document.getElementById('pr-room').value;
             const selEventType = document.getElementById('pr-event-type').value;
             const incType = document.getElementById('pr-include').value;
-
             let bookings = getBookings();
             let events = getEvents();
-
             if (dStart) bookings = bookings.filter(b => b.date >= dStart);
             if (dEnd) bookings = bookings.filter(b => b.date <= dEnd);
             if (selRoom !== 'ALL') bookings = bookings.filter(b => b.room === selRoom);
-
             bookings.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
             if (dStart) events = events.filter(ev => ev.date >= dStart);
             if (dEnd) events = events.filter(ev => ev.date <= dEnd);
             if (selRoom !== 'ALL') events = events.filter(ev => ev.room === selRoom);
             if (selEventType !== 'ALL') events = events.filter(ev => ev.type === selEventType);
-
             events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
             const totalBookingsGuests = bookings.reduce((sum, b) => sum + (parseInt(b.guests) || 0), 0);
             const totalEventsGuests = events.reduce((sum, ev) => sum + (parseInt(ev.adults) || 0) + (parseInt(ev.children) || 0), 0);
             const totalEventsRevenue = events.reduce((sum, ev) => sum + (parseFloat(ev.priceTotal) || 0), 0);
-
             let periodText = "Tutto lo Storico";
             if (dStart && dEnd) periodText = `Dal ${dStart.split('-').reverse().join('/')} al ${dEnd.split('-').reverse().join('/')}`;
             else if (dStart) periodText = `Dal ${dStart.split('-').reverse().join('/')}`;
             else if (dEnd) periodText = `Fino al ${dEnd.split('-').reverse().join('/')}`;
-
             let roomText = selRoom === 'ALL' ? 'Tutte le Sale' : selRoom;
             let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
-
             let printWin = window.open('', '_blank');
             let html = `
                 <!DOCTYPE html>
@@ -1342,14 +1320,12 @@
                         • Periodo: <b>${periodText}</b> (Include Date Retroattive)<br>
                         • Sala: <b>${roomText}</b> | Tipologia Evento: <b>${eventTypeText}</b>
                     </div>
-
                     <div class="stats-box">
                         ${incType !== 'EVENTS' ? `<div class="stat-item">📋 Prenotazioni Trovate: ${bookings.length} (${totalBookingsGuests} Coperti Totali)</div>` : ''}
                         ${incType !== 'BOOKINGS' ? `<div class="stat-item">🎉 Eventi Trovati: ${events.length} (${totalEventsGuests} Ospiti Totali)</div>` : ''}
                         ${(incType !== 'BOOKINGS' && showPrices) ? `<div class="stat-item">💶 Incasso Totale Previsto Eventi: € ${totalEventsRevenue.toFixed(2)}</div>` : ''}
                     </div>
             `;
-
             if (incType === 'BOTH' || incType === 'BOOKINGS') {
                 html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
                 if (bookings.length === 0) {
@@ -1389,7 +1365,6 @@
                     html += `</tbody></table>`;
                 }
             }
-
             if (incType === 'BOTH' || incType === 'EVENTS') {
                 html += `<h2>🎉 Dettaglio Completo Eventi & Festeggiamenti (${events.length})</h2>`;
                 if (events.length === 0) {
@@ -1403,11 +1378,12 @@
                                     <th>Cliente / Evento</th>
                                     <th>Sala & Tavoli</th>
                                     <th>Ospiti (Adulti/Bimbi)</th>
-                                    <th>Menu Adulti</th>
-                                    <th>Menu Bimbi</th>
+                                    <th>Menu Adulti & Bimbi</th>
+                                    <th>Giropizza, Pane & Bevande</th>
                                     <th>Extra & Allergie</th>
                                     ${showPrices ? `
-                                        <th>Prezzi €/Persona</th>
+                                        <th>Prezzi €/Pers</th>
+                                        <th>Spese Extra</th>
                                         <th>Acconto</th>
                                         <th>Totale (€)</th>
                                     ` : ''}
@@ -1423,28 +1399,34 @@
                         if(ev.first) menuAdultiStr.push('• Primi: ' + ev.first);
                         if(ev.second) menuAdultiStr.push('• Secondi: ' + ev.second);
                         if(ev.dessert) menuAdultiStr.push('• Dolce/Torta: ' + ev.dessert);
-
+                        let menuBimbiStr = ev.childMenu ? '• Menu Bimbi: ' + ev.childMenu : '';
                         let extraStr = [];
                         if(ev.decor) extraStr.push('Addobbi: ' + ev.decor);
                         if(ev.music) extraStr.push('Musica: ' + ev.music);
                         if(ev.notes) extraStr.push('Note/Allergie: ' + ev.notes);
+                        
+                        let prodExtraStr = [];
+                        if(ev.giropizza === 'Sì') prodExtraStr.push('• Giropizza: Sì');
+                        if(ev.breadType) prodExtraStr.push('• Pane: ' + ev.breadType);
+                        if(ev.liquors) prodExtraStr.push('• Liquori: ' + ev.liquors);
+                        if(ev.cocktails) prodExtraStr.push('• Cocktail: ' + ev.cocktails);
 
                         const nAdults = parseInt(ev.adults) || 0;
                         const nChildren = parseInt(ev.children) || 0;
                         const pAdult = ev.priceAdult ? ev.priceAdult + ' €' : '-';
                         const pChild = ev.priceChild ? ev.priceChild + ' €' : '-';
-
                         html += `
                             <tr>
                                 <td><b>${evDate}</b> (${ev.shift || 'Cena'})</td>
                                 <td><b>${ev.name}</b><br><small>Tipo: ${ev.type}</small><br><small>Tel: ${ev.phone || '-'}</small></td>
                                 <td>${ev.room} ${ev.tables ? '(' + ev.tables + ')' : '(Intera Sala)'}</td>
                                 <td><b>${nAdults + nChildren} Tot.</b><br>(${nAdults} Adulti + ${nChildren} Bimbi)</td>
-                                <td>${menuAdultiStr.join('<br>') || '-'}</td>
-                                <td>${ev.childMenu || '-'}</td>
+                                <td>${menuAdultiStr.join('<br>') || '-'}${menuBimbiStr ? '<br>' + menuBimbiStr : ''}</td>
+                                <td>${prodExtraStr.join('<br>') || '-'}</td>
                                 <td>${extraStr.join('<br>') || '-'}</td>
                                 ${showPrices ? `
                                     <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
+                                    <td>${ev.extraCosts ? ev.extraCosts + ' €' : '0 €'}</td>
                                     <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
                                     <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
                                 ` : ''}
@@ -1454,7 +1436,6 @@
                     html += `</tbody></table>`;
                 }
             }
-
             html += `
                     <div class="footer">
                         Documento riservato e protetto generato il ${new Date().toLocaleString()} - Ristorante Vecchio Frantoio
@@ -1465,12 +1446,10 @@
                 </body>
                 </html>
             `;
-
             closeModal('print-modal');
             printWin.document.write(html);
             printWin.document.close();
         }
-
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     </script>
