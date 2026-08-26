@@ -927,11 +927,10 @@
                 <div>${eventsListHtml}</div>
             `;
         }
-        // STAMPA SINGOLO EVENTO / PREVENTIVO (CON LOGO EDITORIALE PROPORZIONATO)
+        // STAMPA SINGOLO EVENTO / PREVENTIVO (OTTIMIZZATO PER 1 FOGLIO A4 SENZA DISTORSIONE LOGO)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
-            // Scelta utente: Stampare con o senza prezzi
             let showPrices = false;
             const wantPrices = confirm("Vuoi includere il Preventivo Economico, i Prezzi e il Totale nella stampa?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
             
@@ -966,19 +965,23 @@
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
-                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px; }
-                        .logo-img { max-height: 120px; width: auto; max-width: 100%; margin: 0 auto 10px auto; display: block; object-fit: contain; }
-                        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; color: #111; }
-                        .header p { margin: 4px 0 0 0; font-size: 13px; color: #555; font-weight: bold; }
-                        .box { border: 1px solid #000; padding: 10px 14px; margin-bottom: 12px; border-radius: 4px; }
-                        .box-title { font-size: 13px; font-weight: bold; background: #eee; padding: 4px 8px; border-bottom: 1px solid #000; margin: -10px -14px 10px -14px; text-transform: uppercase; }
-                        .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+                        * { box-sizing: border-box; }
+                        body { font-family: Arial, sans-serif; padding: 0; margin: 0; color: #000; line-height: 1.35; font-size: 11.5px; }
+                        .header { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
+                        .logo-img { max-height: 70px; width: auto; max-width: 100%; margin: 0 auto 4px auto; display: block; object-fit: contain; }
+                        .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; color: #111; letter-spacing: 0.5px; }
+                        .header p { margin: 2px 0 0 0; font-size: 11px; color: #555; font-weight: bold; }
+                        .box { border: 1px solid #000; padding: 6px 10px; margin-bottom: 6px; border-radius: 4px; page-break-inside: avoid; }
+                        .box-title { font-size: 11px; font-weight: bold; background: #eee; padding: 3px 6px; border-bottom: 1px solid #000; margin: -6px -10px 6px -10px; text-transform: uppercase; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 11.5px; }
                         .row div { flex: 1; }
-                        .menu-item { font-size: 13px; margin-bottom: 4px; }
-                        .totali-box { font-size: 14px; background: #f9f9f9; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px; }
-                        .footer { text-align: center; font-size: 11px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
-                        @media print { @page { margin: 1.5cm; } }
+                        .menu-item { font-size: 11px; margin-bottom: 2px; }
+                        .totali-box { font-size: 12px; background: #f9f9f9; border-top: 1.5px solid #000; padding-top: 4px; margin-top: 4px; }
+                        .footer { text-align: center; font-size: 9.5px; color: #666; margin-top: 8px; border-top: 1px solid #ccc; padding-top: 4px; }
+                        @media print {
+                            @page { size: A4 portrait; margin: 8mm; }
+                            body { padding: 0; }
+                        }
                     </style>
                 </head>
                 <body>
@@ -990,14 +993,14 @@
                     <div class="box">
                         <div class="box-title">📋 Dati Cliente & Evento</div>
                         <div class="row">
-                            <div><b>Data Evento:</b> <span style="font-size:15px; font-weight:bold;">${formattedDate} (${ev.shift || 'Cena'})</span></div>
+                            <div><b>Data Evento:</b> <span style="font-size:13px; font-weight:bold;">${formattedDate} (${ev.shift || 'Cena'})</span></div>
                             <div><b>Tipologia Evento:</b> ${ev.type}</div>
                         </div>
-                        <div class="row" style="margin-top:5px;">
+                        <div class="row">
                             <div><b>Cliente / Festeggiato:</b> ${ev.name}</div>
                             <div><b>Telefono:</b> ${ev.phone || '-'}</div>
                         </div>
-                        <div class="row" style="margin-top:5px;">
+                        <div class="row">
                             <div><b>Orario Uscita Previsto:</b> ${ev.outTime || '-'}</div>
                         </div>
                     </div>
@@ -1045,13 +1048,13 @@
                             <div><b>Prezzo Adulti:</b> ${ev.priceAdult ? ev.priceAdult + ' € / pers' : '-'}</div>
                             <div><b>Prezzo Bimbi:</b> ${ev.priceChild ? ev.priceChild + ' € / pers' : '-'}</div>
                         </div>
-                        <div class="row" style="margin-top:5px;">
+                        <div class="row">
                             <div><b>Spese Extra:</b> ${ev.extraCosts ? ev.extraCosts + ' €' : '0 €'}</div>
                             <div><b>Acconto Versato:</b> ${ev.deposit ? ev.deposit + ' €' : '0 €'}</div>
                         </div>
                         <div class="totali-box">
                             <div class="row">
-                                <div><b style="font-size:15px;">TOTALE EVENTO: ${ev.priceTotal ? ev.priceTotal + ' €' : '0 €'}</b></div>
+                                <div><b style="font-size:14px;">TOTALE EVENTO: ${ev.priceTotal ? ev.priceTotal + ' €' : '0 €'}</b></div>
                             </div>
                         </div>
                     </div>
@@ -1270,7 +1273,6 @@
         }
         function executeFilteredPrint(e) {
             e.preventDefault();
-            // Scelta utente: Stampare il report con o senza prezzi
             let showPrices = false;
             const wantPrices = confirm("Vuoi includere i Prezzi e gli Incassi nel Report finale?\n\n• Clicca OK per Stampare CON Prezzi\n• Clicca ANNULLA per Stampare SENZA Prezzi");
             
@@ -1322,21 +1324,23 @@
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-                        .header-print { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px; }
-                        .logo-img { max-height: 120px; width: auto; max-width: 100%; margin: 0 auto 10px auto; display: block; object-fit: contain; }
-                        h1 { font-size: 20px; margin: 0; text-transform: uppercase; color: #111; }
-                        .header-print p { margin: 4px 0 0 0; font-size: 13px; color: #555; font-weight: bold; }
-                        .filter-info { font-size: 11px; background: #f1f5f9; padding: 8px 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
-                        h2 { font-size: 15px; margin-top: 20px; margin-bottom: 8px; background: #e2e8f0; padding: 6px 10px; border-left: 4px solid #3b82f6; }
-                        .stats-box { display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
-                        .stat-item { font-size: 11px; font-weight: bold; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                        th, td { border: 1px solid #94a3b8; padding: 6px 8px; text-align: left; font-size: 11px; vertical-align: top; }
+                        * { box-sizing: border-box; }
+                        body { font-family: Arial, sans-serif; padding: 0; margin: 0; color: #000; font-size: 11px; }
+                        .header-print { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+                        .logo-img { max-height: 65px; width: auto; max-width: 100%; margin: 0 auto 4px auto; display: block; object-fit: contain; }
+                        h1 { font-size: 18px; margin: 0; text-transform: uppercase; color: #111; }
+                        .header-print p { margin: 2px 0 0 0; font-size: 11px; color: #555; font-weight: bold; }
+                        .filter-info { font-size: 10.5px; background: #f1f5f9; padding: 6px 10px; border: 1px solid #cbd5e1; margin-bottom: 10px; }
+                        h2 { font-size: 13px; margin-top: 12px; margin-bottom: 6px; background: #e2e8f0; padding: 4px 8px; border-left: 4px solid #3b82f6; }
+                        .stats-box { display: flex; gap: 12px; margin-bottom: 10px; background: #f8fafc; padding: 8px; border: 1px solid #cbd5e1; flex-wrap: wrap; }
+                        .stat-item { font-size: 10.5px; font-weight: bold; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                        th, td { border: 1px solid #94a3b8; padding: 4px 6px; text-align: left; font-size: 10px; vertical-align: top; }
                         th { background: #f1f5f9; font-weight: bold; }
-                        .footer { font-size: 10px; color: #64748b; margin-top: 30px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+                        .footer { font-size: 9px; color: #64748b; margin-top: 15px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 4px; }
                         @media print {
-                            @page { margin: 1cm; }
+                            @page { size: A4 portrait; margin: 8mm; }
+                            body { padding: 0; }
                         }
                     </style>
                 </head>
@@ -1361,7 +1365,7 @@
             if (incType === 'BOTH' || incType === 'BOOKINGS') {
                 html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
                 if (bookings.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessuna prenotazione trovata.</p>`;
+                    html += `<p style="font-size:10px; color:#666;">Nessuna prenotazione trovata.</p>`;
                 } else {
                     html += `
                         <table>
@@ -1400,7 +1404,7 @@
             if (incType === 'BOTH' || incType === 'EVENTS') {
                 html += `<h2>🎉 Dettaglio Completo Eventi & Festeggiamenti (${events.length})</h2>`;
                 if (events.length === 0) {
-                    html += `<p style="font-size:11px; color:#666;">Nessun evento trovato.</p>`;
+                    html += `<p style="font-size:10px; color:#666;">Nessun evento trovato.</p>`;
                 } else {
                     html += `
                         <table>
@@ -1459,7 +1463,7 @@
                                     <td>Adulti: <b>${pAdult}</b><br>Bimbi: <b>${pChild}</b></td>
                                     <td>${ev.extraCosts ? ev.extraCosts + ' €' : '0 €'}</td>
                                     <td>${ev.deposit ? ev.deposit + ' €' : '0 €'}</td>
-                                    <td><b style="font-size:12px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
+                                    <td><b style="font-size:11px;">${ev.priceTotal ? ev.priceTotal + ' €' : '-'}</b></td>
                                 ` : ''}
                             </tr>
                         `;
