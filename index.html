@@ -55,11 +55,9 @@
         .t-name { font-size: clamp(7px, 2vw, 9px); color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
         .t-occ-badge { background: #ef4444; color: #fff; font-size: clamp(6px, 1.8vw, 8px); font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
         .t-ev-badge { background: #8b5cf6; color: #fff; font-size: clamp(6px, 1.8vw, 8px); font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
-
         @media (max-width: 360px) {
             .tables-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
         }
-
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
@@ -716,18 +714,20 @@
                 });
                 if (b) {
                     occCount++;
+                    const guestsNum = b.guests || 1;
                     gridHtml += `
                         <div class="table-card occupied" onclick="handleTableClick(${i}, 'booking', '${b.id}')">
-                            <div class="t-occ-badge">OCC.</div>
+                            <div class="t-occ-badge">OCC. (${guestsNum} pers.)</div>
                             <div class="t-num">${i}</div>
                             <div class="t-name">${b.name}</div>
                         </div>
                     `;
                 } else if (ev) {
+                    const totalEvGuests = (parseInt(ev.adults) || 0) + (parseInt(ev.children) || 0);
                     occCount++;
                     gridHtml += `
                         <div class="table-card event-occupied" onclick="handleTableClick(${i}, 'event', '${ev.id}')">
-                            <div class="t-ev-badge">🎉 EVENTO</div>
+                            <div class="t-ev-badge">🎉 EVENTO (${totalEvGuests}p)</div>
                             <div class="t-num">${i}</div>
                             <div class="t-name">${ev.name}</div>
                         </div>
@@ -1371,7 +1371,7 @@
                     </div>
             `;
             if (incType === 'BOTH' || incType === 'BOOKINGS') {
-                html += `h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
+                html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
                 if (bookings.length === 0) {
                     html += `<p style="font-size:10px; color:#666;">Nessuna prenotazione trovata.</p>`;
                 } else {
