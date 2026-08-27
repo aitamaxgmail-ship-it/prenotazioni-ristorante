@@ -376,12 +376,9 @@
         </div>
     </div>
     <script>
-        // LOGO EMBEDDED IN BASE64 (FORMATTATO PER STAMPA PERFETTA SENZA DISTORSIONI)
-        const LOGO_BASE64 = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMjgwIj48ZyB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSIxNTAiIHk9IjQwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNkNGFmMzciPkFHUklUVVJJU01PPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTYwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMTMwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzhiN2QzYiI+QTwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjIyMCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2Q0YWYzNyI+VkVDQ0hJTyBGUkFOVE9JTzwvdGV4dD48L2c+PC9zdmc+`;
+        // LOGO BASE64 CORRETTO CON ATTR RISOLUTIVI PER EVITARE DISTORSIONI IN STAMPA (width=500 height=500 preserveAspectRatio)
+        const LOGO_BASE64 = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCI+PGRlZnM+PHBhdGggaWQ9ImEiIGQ9Ik0xMjAsMjAwIEExNTAsMTUwIDAgMCwxIDM4MCwyMDAiLz48cGF0aCBpZD0iYiIgZD0iTTYwLDM3MCBBMjAwLDIwMCAwIDAsMCA0NDAsMzcwIi8+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRTVDMTU4Ii8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiNDNTlCMjciLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM5QTc0MTAiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0ibCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI0EyQjM3NiIvPjxzdG9wIG9mZmNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzY3N0Q0MiIvPjwvlineYXJHcmFkaWVudD48ZmlsdGVyIGlkPSJzIj48ZmVEcm9wU2hhZG93IGR4PSIxIiBkeT0iMiIgc3RkRGV2aWF0aW9uPSIyIiBmbG9vZC1jb2xvcj0iIzAwMCIgZmxvb2Qtb3BhY2l0eT0iMC4zIi8+PC9maWx0ZXI+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEwMCw0MCkgcm90YXRlKC0yMCkgc2NhbGUoMC42NSkiIGZpbHRlcj0idXJsKCNzKSI+PHBhdGggZD0iTTEwLDUwIEwyNSwxMCBMNDUsMzUgTDY1LDUgTDg1LDM1IEwxMDUsMTAgTDEyMCw1MCZaIiBmaWxsPSJ1cmwoI2cpIiBzdHJva2U9IiM4QTY0MDUiIHN0cm9rZS13aWR0aD0iMiIvPjxjaXJjbGUgY3g9IjI1IiBjeT0iOCIgcj0iNCIgZmlsbD0iI0U1QzE1OCIvPjxjaXJjbGUgY3g9IjY1IiBjeT0iMyIgcj0iNSIgZmlsbD0iI0U1QzE1OCIvPjxjaXJjbGUgY3g9IjEwNSIgY3k9IjgiIHI9IjQiIGZpbGw9IiNFNUMxNTgiLz48cGF0aCBkPSJNMTUsNTAgQTY1LDY1IDExNSw1MCBMMTEwLDU4IEE2NSw3MiAyMCw1OCBaIiBmaWxsPSJ1cmwoI2cpIi8+PC9nPjx0ZXh0IGZvbnQtZmFtaWx5PSInVGltZXMgTmV3IFJvbWFuJywgc2VyaWYiIGZvbnQtc2l6ZT0iMjAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ1cmwoI2cpIiBsZXR0ZXItc3BhY2luZz0iMyI+PHRleHRQYXRoIGhyZWY9IiNhIiBzdGFydE9mZnNldD0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BR1JJVFVSSVNNTzwvdGV4dFBhdGg+PC90ZXh0PjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIyIj48Y2lyY2xlIGN4PSIyNTAiIGN5PSIyNTAiIHI9IjE2MCIgc3Ryb2tlLWRhc2hhcnJheT0iMzQwIDMwIiB0cmFuc2Zvcm09InJvdGF0ZSgtNDAgMjUwIDI1MCkiLz48Y2lyY2xlIGN4PSIyNTAiIGN5PSIyNTAiIHI9IjE0OCIgb3BhY2l0eT0iMC41Ii8+PC9nPjxnIGZpbGw9InVybCgjbCkiIG9wYWNpdHk9IjAuOCI+PHBhdGggZD0iTTEzMCwxODAgQzExMCwxNzAgMTAwLDE5MCAxMTUsMjA1IEMxMDAsMjEwIDEwNSwyMzAgMTI1LDIyNSBDMTEwLDI0MCAxMjUsMjYwIDE0MCwyNDUgWiIvPjxwYXRoIGQ9Ik0xMjAsMjYwIEMxMDUsMjcwIDExNSwyOTAgMTM1LDI4NSBDMTI1LDMwMCAxNDUsMzE1IDE1NSwyOTUgQzE1MCwzMTUsMTc1LDMyNSAxODAsMzAwIFoiLz48cGF0aCBkPSJNMzcwLDE4MCBDMzkwLDE3MCA0MDAsMTkwIDM4NSwyMDUgQzQwMCwyMTAgMzk1LDIzMCAzNzUsMjI1IEMzOTAsMjQwIDM3NSwyNjAgMzYwLDI0NSBaIi8+PHBhdGggZD0iTTM4MCwyNjAgQzM5NSwyNzAgMzg1LDI5MCAzNjUsMjg1IEMzNzUsMzAwIDM1NSwzMTUgMzQ1LDI5NSBDMzUwLDMxNSAzMjUsMzI1IDMyMCwzMDAgWiIvPjwvZz48ZyBmaWx0ZXI9InVybCgjcykiPjx0ZXh0IHg9IjI1MCIgeT0iMzMwIiBmb250LWZhbWlseT0iJ1RpbWVzIE5ldyBSb21hbicsIHNlcmlmIiBmb250LXNpemU9IjIxMCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI2Ij5BPC90ZXh0Pjx0ZXh0IHg9IjI1MCIgeT0iMzMwIiBmb250LWZhbWlseT0iJ1RpbWVzIE5ldyBSb21hbicsIHNlcmlmIiBmb250LXNpemU9IjIxMCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNGRkYiPkE8L3RleHQ+PHRleHQgeD0iMjUwIiB5PSIzMzAiIGZvbnQtZmFtaWx5PSInVGltZXMgTmV3IFJvbWFuJywgc2VyaWYiIGZvbnQtc2l6ZT0iMjEwIiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0idXJsKCNnKSIgb3BhY2l0eT0iMC44NSI+QTwvdGV4dD48cGF0aCBkPSJNMTg1LDI4MCBRMjMwLDE5MCAyNzUsMzEwIFQzMTUsMjM1IiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMTIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC45Ii8+PHBhdGggZD0iTTE4NSwyODAgUTIzMCwxOTAgMjc1LDMxMCBUMzE1LDIzNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC43Ii8+PC9nPjx0ZXh0IGZvbnQtZmFtaWx5PSInVGltZXMgTmV3IFJvbWFuJywgc2VyaWYiIGZvbnQtc2l6ZT0iMjciIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ1cmwoI2cpIiBsZXR0ZXItc3BhY2luZz0iMyI+PHRleHRQYXRoIGhyZWY9IiNiIiBzdGFydE9mZnNldD0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5WRUNDSElPIEZSQU5UT0lPPC90ZXh0UGF0aD48L3RleHQ+PC9zdmc+`;
 
-        // ==========================================
-        // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAVLYQuJFXNPQOc4NmCK6xxgQu8llqTk84",
             authDomain: "vecchiofrantoio-38c10.firebaseapp.com",
@@ -392,23 +389,20 @@
             appId: "1:1062473587372:web:984f7424b56f31b7571d09",
             measurementId: "G-CRM1C9YHC8"
         };
-        const MASTER_DELETE_PASS = "nikita78"; // Password Master / Supervisore
+        const MASTER_DELETE_PASS = "nikita78";
         let db = null;
         window.vf_bookings = [];
         window.vf_events = [];
-        // Filtri Date per Eventi
         let eventFilterStartDate = '';
         let eventFilterEndDate = '';
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
-            // Sincronizzazione Realtime Prenotazioni
             db.ref('bookings').on('value', (snapshot) => {
                 const val = snapshot.val();
                 window.vf_bookings = val ? Object.values(val) : [];
                 renderView();
             });
-            // Sincronizzazione Realtime Eventi
             db.ref('events').on('value', (snapshot) => {
                 const val = snapshot.val();
                 window.vf_events = val ? Object.values(val) : [];
@@ -421,7 +415,7 @@
         }
         function getBookings() { return window.vf_bookings || []; }
         function getEvents() { return window.vf_events || []; }
-        // CONTROL ACCESS & LOCK
+
         function checkPassword(e) {
             e.preventDefault();
             const pass = document.getElementById('login-pass').value;
@@ -436,7 +430,6 @@
         function lockApp() {
             document.getElementById('login-overlay').style.display = 'flex';
         }
-        // VERIFICA PASSWORD MASTER PER AZIONI PROTETTE
         function checkMasterPass(customPrompt = "🔐 Inserisci la Password Master / Supervisore per accedere:") {
             const pass = prompt(customPrompt);
             if (pass === MASTER_DELETE_PASS) {
@@ -446,7 +439,6 @@
                 return false;
             }
         }
-        // GESTIONE PERMESSI CAMPI PREZZI (SUPERVISORE)
         function lockEventPriceInputs() {
             const priceAdult = document.getElementById('ev-price-adult');
             const priceChild = document.getElementById('ev-price-child');
@@ -484,7 +476,6 @@
                 }
             }
         }
-        // BACKUP & IMPORT
         function exportBackup() {
             const data = { bookings: getBookings(), events: getEvents(), exportDate: new Date().toISOString() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -527,7 +518,6 @@
             };
             reader.readAsText(file);
         }
-        // ROOMS CONFIG CON NUMERO MASSIMO TAVOLI PER SALA
         const ROOMS = {
             "Sala Esterna": 18,
             "Sala 1": 15,
@@ -540,7 +530,7 @@
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('current-date');
             dateInput.value = today;
-            dateInput.min = today; // BLOCCO DATE RETROATTIVE IN APPLICAZIONE
+            dateInput.min = today;
             setupRoomSelects();
             renderView();
             const tabsWrapper = document.getElementById('tabs-wrapper');
@@ -592,7 +582,6 @@
                 renderTablesView(mainView);
             }
         }
-        // FUNZIONE PER ESTRARRE I TAVOLI DIGITATI DALL'UTENTE
         function getEventTables(ev, roomName) {
             if (ev.room !== roomName) return [];
             const totalTables = ROOMS[roomName] || 20;
@@ -624,7 +613,6 @@
             if (shift1 === 'Tutto il giorno' || shift2 === 'Tutto il giorno') return true;
             return shift1 === shift2;
         }
-        // CONTROLLO DISPONIBILITA' E ESISTENZA TAVOLI IN TEMPO REALE
         function checkEventTablesAvailability() {
             const evId = document.getElementById('ev-id').value;
             const evDate = document.getElementById('ev-date').value;
@@ -685,7 +673,6 @@
             }
             if (submitBtn) submitBtn.disabled = false;
         }
-        // RENDERIZZA TABELLA TAVOLI
         function renderTablesView(container) {
             const curDate = document.getElementById('current-date').value;
             const curShift = document.getElementById('current-shift').value;
@@ -742,7 +729,6 @@
                 <div class="tables-grid">${gridHtml}</div>
             `;
         }
-        // GESTIONE CLIC SUI TAVOLI
         function handleTableClick(tableNum, statusType, id) {
             if (statusType === 'booking') {
                 if (confirm(`Vuoi liberare il Tavolo ${tableNum}?`)) {
@@ -764,7 +750,6 @@
                 openModal('booking-modal');
             }
         }
-        // SALVA PRENOTAZIONE TAVOLO
         function saveBooking(e) {
             e.preventDefault();
             const selectedDate = document.getElementById('current-date').value;
@@ -807,7 +792,6 @@
             }
             closeModal('booking-modal');
         }
-        // GESTIONE FILTRI DATE EVENTI
         function updateEventFilters() {
             eventFilterStartDate = document.getElementById('ev-filter-start').value;
             eventFilterEndDate = document.getElementById('ev-filter-end').value;
@@ -828,17 +812,14 @@
             eventFilterEndDate = '';
             renderView();
         }
-        // VISUALIZZAZIONE SCHEDE EVENTI (ORDINATI PER DATA CRESCENTE CON FILTRO INTERVALLO DATE)
         function renderEventsView(container) {
             let events = getEvents();
-            // Applicazione filtri per intervallo date
             if (eventFilterStartDate) {
                 events = events.filter(ev => ev.date && ev.date >= eventFilterStartDate);
             }
             if (eventFilterEndDate) {
                 events = events.filter(ev => ev.date && ev.date <= eventFilterEndDate);
             }
-            // Ordinamento crescente per data
             events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
             let eventsListHtml = '';
             if (events.length === 0) {
@@ -927,7 +908,8 @@
                 <div>${eventsListHtml}</div>
             `;
         }
-        // STAMPA SINGOLO EVENTO / PREVENTIVO (OTTIMIZZATO PER 1 FOGLIO A4 SENZA DISTORSIONE LOGO)
+
+        // STAMPA SINGOLO EVENTO (CON CSS LOGO RISOLUTIVO PER ANNULLARE LA DISTORSIONE)
         function printSingleEvent(eventId) {
             const ev = getEvents().find(item => item.id === eventId);
             if (!ev) return;
@@ -956,7 +938,6 @@
                 alert("⚠️ Errore: Il browser ha bloccato l'apertura della nuova scheda per la stampa.");
                 return;
             }
-
             let html = `
                 <!DOCTYPE html>
                 <html>
@@ -968,7 +949,7 @@
                         * { box-sizing: border-box; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; color: #000; line-height: 1.35; font-size: 11.5px; }
                         .header { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
-                        .logo-img { max-height: 70px; width: auto; max-width: 100%; margin: 0 auto 4px auto; display: block; object-fit: contain; }
+                        .logo-img { width: 75px; height: 75px; margin: 0 auto 4px auto; display: block; object-fit: contain; }
                         .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; color: #111; letter-spacing: 0.5px; }
                         .header p { margin: 2px 0 0 0; font-size: 11px; color: #555; font-weight: bold; }
                         .box { border: 1px solid #000; padding: 6px 10px; margin-bottom: 6px; border-radius: 4px; page-break-inside: avoid; }
@@ -1088,7 +1069,6 @@
             const total = (adults * priceAdult) + (children * priceChild) + extraCosts;
             document.getElementById('ev-price-total').value = total > 0 ? total : 0;
         }
-        // APERTURA MODALE EVENTO
         function openEventModal(eventId = null) {
             const titleEl = document.getElementById('event-modal-title');
             const idInput = document.getElementById('ev-id');
@@ -1167,7 +1147,6 @@
             checkEventTablesAvailability();
             openModal('event-modal');
         }
-        // SALVATAGGIO EVENTO
         function saveEvent(e) {
             e.preventDefault();
             const existingId = document.getElementById('ev-id').value;
@@ -1258,9 +1237,6 @@
                 }
             }
         }
-        // ==========================================
-        // FILTRI STAMPA & STORICO COMPLETO
-        // ==========================================
         function openPrintModal() {
             if (checkMasterPass()) {
                 document.getElementById('pr-date-start').value = '';
@@ -1271,6 +1247,7 @@
                 openModal('print-modal');
             }
         }
+        // STAMPA REPORT GENERALE (CON CSS LOGO RISOLUTIVO)
         function executeFilteredPrint(e) {
             e.preventDefault();
             let showPrices = false;
@@ -1309,13 +1286,11 @@
             let eventTypeText = selEventType === 'ALL' ? 'Tutti i Tipi Evento' : selEventType;
             
             closeModal('print-modal');
-
             let printWin = window.open('', '_blank');
             if (!printWin) {
                 alert("⚠️ Errore: Il browser ha bloccato l'apertura della nuova scheda per la stampa.");
                 return;
             }
-
             let html = `
                 <!DOCTYPE html>
                 <html>
@@ -1327,7 +1302,7 @@
                         * { box-sizing: border-box; }
                         body { font-family: Arial, sans-serif; padding: 0; margin: 0; color: #000; font-size: 11px; }
                         .header-print { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
-                        .logo-img { max-height: 65px; width: auto; max-width: 100%; margin: 0 auto 4px auto; display: block; object-fit: contain; }
+                        .logo-img { width: 70px; height: 70px; margin: 0 auto 4px auto; display: block; object-fit: contain; }
                         h1 { font-size: 18px; margin: 0; text-transform: uppercase; color: #111; }
                         .header-print p { margin: 2px 0 0 0; font-size: 11px; color: #555; font-weight: bold; }
                         .filter-info { font-size: 10.5px; background: #f1f5f9; padding: 6px 10px; border: 1px solid #cbd5e1; margin-bottom: 10px; }
