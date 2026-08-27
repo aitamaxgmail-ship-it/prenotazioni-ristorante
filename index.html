@@ -42,19 +42,24 @@
         .counters { font-size: 12px; font-weight: 600; }
         .c-free { color: #22c55e; margin-right: 8px; }
         .c-occ { color: #ef4444; }
-        /* GRID TABLES 5 COLUMNS */
-        .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
-        .table-card { aspect-ratio: 1 / 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
+        /* GRID TABLES 5 COLUMNS ADATTIVA */
+        .tables-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 15px; width: 100%; }
+        .table-card { aspect-ratio: 1 / 1; min-width: 0; overflow: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; cursor: pointer; transition: transform 0.1s; position: relative; text-align: center; }
         .table-card:active { transform: scale(0.95); }
         .table-card.free { background: #092615; border: 1.5px solid #22c55e; color: #22c55e; }
         .table-card.occupied { background: #380d0f; border: 1.5px solid #ef4444; color: #ef4444; }
         .table-card.event-occupied { background: #2e1065; border: 1.5px solid #8b5cf6; color: #a78bfa; }
         
-        .t-num { font-size: 16px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 2px; }
-        .t-status { font-size: 9px; font-weight: 700; text-transform: uppercase; }
-        .t-name { font-size: 9px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
-        .t-occ-badge { background: #ef4444; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
-        .t-ev-badge { background: #8b5cf6; color: #fff; font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+        .t-num { font-size: clamp(11px, 3.8vw, 16px); font-weight: 800; color: #fff; line-height: 1; margin-bottom: 2px; }
+        .t-status { font-size: clamp(7px, 2vw, 9px); font-weight: 700; text-transform: uppercase; }
+        .t-name { font-size: clamp(7px, 2vw, 9px); color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; font-weight: 600; margin-top: 1px; }
+        .t-occ-badge { background: #ef4444; color: #fff; font-size: clamp(6px, 1.8vw, 8px); font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+        .t-ev-badge { background: #8b5cf6; color: #fff; font-size: clamp(6px, 1.8vw, 8px); font-weight: 800; padding: 1px 3px; border-radius: 3px; margin-bottom: 1px; }
+
+        @media (max-width: 360px) {
+            .tables-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        }
+
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
@@ -93,7 +98,7 @@
     <div class="app-container">
         <header>
             <div class="logo">
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMjgwIj48ZyB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSIxNTAiIHk9IjQwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNkNGFmMzciPkFHUklUVVJJU01PPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTYwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMTMwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzhiN2QzYiI+QTwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjIyMCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2Q0YWYzNyI+VkVDQ0hJTyBGUkFOVE9JTzwvdGV4dD48L2c+PC9zdmc+" alt="Logo" style="height:28px; width:auto; vertical-align:middle;">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMjgwIj48ZyB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSIxNTAiIHk9IjQwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNkNGFmMzciPkFHUklUVVJJU01PPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTYwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMTMwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzhiN2QzYiI+QTwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjIyMCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iI2Q0YWYzNyI+VkVDQ0hJTyBGUkFOVE9JTzwvdGV4dD48L2c+PC9zdmc+" alt="Logo" style="height:28px; width:auto; vertical-align:middle;">
                 Vecchio Frantoio 
                 <span class="status-badge" id="net-status">🟢 Live Cloud</span>
             </div>
@@ -1366,7 +1371,7 @@
                     </div>
             `;
             if (incType === 'BOTH' || incType === 'BOOKINGS') {
-                html += `<h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
+                html += `h2>📋 Storico Prenotazioni Tavoli (${bookings.length})</h2>`;
                 if (bookings.length === 0) {
                     html += `<p style="font-size:10px; color:#666;">Nessuna prenotazione trovata.</p>`;
                 } else {
