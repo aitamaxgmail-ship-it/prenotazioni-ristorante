@@ -82,7 +82,7 @@
     <div id="login-overlay">
         <div class="login-card">
             <h2 style="color:#f59e0b; margin-bottom:10px; font-size:18px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                <img src="file:///C:/Users/Massimiliano/Desktop/icone%20app/Nuova%20cartella/prenotazioni%20ristorante%20agriturismo/logo.png.png" alt="Logo" style="height:32px; width:auto;">
+                <img src="logo.jpg" alt="Logo" style="height:32px; width:auto;">
                 Vecchio Frantoio
             </h2>
             <p style="font-size:12px; color:#a1a1aa; margin-bottom:15px;">Inserisci la password di accesso:</p>
@@ -96,7 +96,7 @@
     <div class="app-container">
         <header>
             <div class="logo">
-                <img src="file:///C:/Users/Massimiliano/Desktop/icone%20app/Nuova%20cartella/prenotazioni%20ristorante%20agriturismo/logo.png.png" alt="Logo" style="height:28px; width:auto; vertical-align:middle;">
+                <img src="logo.jpg" alt="Logo" style="height:28px; width:auto; vertical-align:middle;">
                 Vecchio Frantoio 
                 <span class="status-badge" id="net-status">🟢 Live Cloud</span>
             </div>
@@ -388,8 +388,8 @@
         </div>
     </div>
     <script>
-        // LOGO EMBEDDED DALLA CARTELLA LOCALE
-        const LOGO_BASE64 = `file:///C:/Users/Massimiliano/Desktop/icone%20app/Nuova%20cartella/prenotazioni%20ristorante%20agriturismo/logo.png.png`;
+        // LOGO EMBEDDED DALLA CARTELLA REPOSITORY / LOCALE
+        const LOGO_BASE64 = `logo.jpg`;
         // ==========================================
         // CONFIGURAZIONE FIREBASE VECCHIOFRANTOIO
         // ==========================================
@@ -758,7 +758,6 @@
                 <div class="tables-grid">${gridHtml}</div>
             `;
         }
-
         // STAMPA RIEPILOGO GIORNALIERO DELLA SINGOLA SALA
         function printRoomSummary(roomName) {
             const curDate = document.getElementById('current-date').value;
@@ -771,18 +770,15 @@
             const bookings = getBookings().filter(b => b.date === curDate && b.room === roomName);
             const events = getEvents().filter(ev => ev.date === curDate && ev.room === roomName);
             const totalTables = ROOMS[roomName] || 0;
-
             let tableRowsHtml = '';
             let totalGuests = 0;
             let occTablesCount = 0;
-
             for (let i = 1; i <= totalTables; i++) {
                 const bList = bookings.filter(b => parseInt(b.table) === i);
                 const evList = events.filter(ev => {
                     const evTbls = getEventTables(ev, roomName);
                     return evTbls.includes(i);
                 });
-
                 if (bList.length > 0) {
                     bList.forEach(b => {
                         occTablesCount++;
@@ -833,13 +829,11 @@
                     `;
                 }
             }
-
             let printWin = window.open('', '_blank');
             if (!printWin) {
                 alert("⚠️ Errore: Il browser ha bloccato l'apertura della scheda per la stampa.");
                 return;
             }
-
             let html = `
                 <!DOCTYPE html>
                 <html>
@@ -907,7 +901,6 @@
             printWin.document.write(html);
             printWin.document.close();
         }
-
         // GESTIONE CLIC SUI TAVOLI (VISUALIZZA, MODIFICA O LIBERA)
         function handleTableClick(tableNum, statusType, id) {
             const deleteBtn = document.getElementById('btn-delete-booking');
